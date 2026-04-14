@@ -1,0 +1,32 @@
+services:
+  homeassistant:
+    container_name: webauthn_mfa_ha_dev
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - ha-config:/config
+      - ./custom_components/webauthn_mfa:/config/custom_components/webauthn_mfa
+    ports:
+      - "8123:8123"
+    environment:
+      - TZ=${TZ:-America/Toronto}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  test:
+    container_name: webauthn_mfa_test
+    image: python:3.12-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: >
+      bash -c "pip install -r requirements_test.txt ruff --quiet &&
+               pytest tests/ -v --tb=short"
+    profiles:
+      - test
+
+volumes:
+  ha-config:

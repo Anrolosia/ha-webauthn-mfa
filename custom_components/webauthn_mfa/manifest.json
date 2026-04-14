@@ -1,0 +1,21 @@
+{
+  "domain": "webauthn_mfa",
+  "name": "WebAuthn / Passkey Authentication",
+  "codeowners": [
+    "@anrolosia"
+  ],
+  "dependencies": [
+    "auth",
+    "frontend",
+    "http",
+    "panel_custom"
+  ],
+  "documentation": "https://github.com/anrolosia/ha-webauthn-mfa",
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/anrolosia/ha-webauthn-mfa/issues",
+  "requirements": [
+    "webauthn==2.2.0"
+  ],
+  "version": "1.0.0"
+}

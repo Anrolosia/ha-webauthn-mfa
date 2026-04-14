@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+*.egg-info/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local development environment
+ha-config/
+.env
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,54 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+  "A",     # flake8-builtins
+  "ASYNC", # flake8-async
+  "B",     # flake8-bugbear
+  "BLE",   # flake8-blind-except
+  "C4",    # flake8-comprehensions
+  "DTZ",   # flake8-datetimez
+  "E",     # pycodestyle errors
+  "F",     # pyflakes
+  "FLY",   # flynt
+  "I",     # isort
+  "ICN",   # flake8-import-conventions
+  "ISC",   # flake8-implicit-str-concat
+  "N",     # pep8-naming
+  "PERF",  # perflint
+  "PGH",   # pygrep-hooks
+  "PIE",   # flake8-pie
+  "PLC",   # pylint convention
+  "PLE",   # pylint error
+  "PLR",   # pylint refactor
+  "PLW",   # pylint warning
+  "PT",    # flake8-pytest-style
+  "RET",   # flake8-return
+  "RSE",   # flake8-raise
+  "RUF",   # ruff-specific
+  "SIM",   # flake8-simplify
+  "SLF",   # flake8-self
+  "SLOT",  # flake8-slots
+  "T20",   # flake8-print
+  "TID",   # flake8-tidy-imports
+  "TRY",   # tryceratops
+  "UP",    # pyupgrade
+  "W",     # pycodestyle warnings
+]
+ignore = [
+  "PLR0913", # too-many-arguments (common in HA patterns)
+  "TRY003",  # avoid specifying messages outside exception class
+]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = ["homeassistant"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_errors = true

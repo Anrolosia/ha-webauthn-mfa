@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Generate release notes from conventional commits ──────────────
+      - name: Generate release notes
+        id: notes
+        run: |
+          PREV_TAG=$(git tag --sort=-version:refname | sed -n '2p')
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+
+          {
+            echo "NOTES<<EOF"
+
+            if [ -z "$PREV_TAG" ]; then
+              RANGE="HEAD"
+              echo "## 🎉 Initial Release"
+              echo ""
+            else
+              RANGE="${PREV_TAG}..HEAD"
+              echo "## What's Changed"
+              echo ""
+            fi
+
+            FEATURES=$(git log $RANGE --pretty=format:"%s|%h" | grep -E "^feat(\(.+\))?:" || true)
+            if [ -n "$FEATURES" ]; then
+              echo "### ✨ New Features"
+              echo "$FEATURES" | while IFS='|' read -r msg hash; do
+                clean=$(echo "$msg" | sed 's/^feat(\(.*\)):/[\1]/' | sed 's/^feat://')
+                echo "- $clean (\`$hash\`)"
+              done
+              echo ""
+            fi
+
+            FIXES=$(git log $RANGE --pretty=format:"%s|%h" | grep -E "^fix(\(.+\))?:" || true)
+            if [ -n "$FIXES" ]; then
+              echo "### 🐛 Bug Fixes"
+              echo "$FIXES" | while IFS='|' read -r msg hash; do
+                clean=$(echo "$msg" | sed 's/^fix(\(.*\)):/[\1]/' | sed 's/^fix://')
+                echo "- $clean (\`$hash\`)"
+              done
+              echo ""
+            fi
+
+            CHORES=$(git log $RANGE --pretty=format:"%s|%h" | grep -E "^(chore|ci|build|refactor|style|test)(\(.+\))?:" || true)
+            if [ -n "$CHORES" ]; then
+              echo "<details>"
+              echo "<summary>🔧 Maintenance</summary>"
+              echo ""
+              echo "$CHORES" | while IFS='|' read -r msg hash; do
+                echo "- $msg (\`$hash\`)"
+              done
+              echo ""
+              echo "</details>"
+              echo ""
+            fi
+
+            if [ -n "$PREV_TAG" ]; then
+              echo "---"
+              echo "**Full changelog:** [\`${PREV_TAG}...${CURRENT_TAG}\`](https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${CURRENT_TAG})"
+            fi
+
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # ── Package the integration ───────────────────────────────────────
+      - name: Create release zip
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          zip -r "webauthn_mfa-${VERSION}.zip" custom_components/webauthn_mfa/
+
+      # ── Publish the GitHub release ────────────────────────────────────
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.notes.outputs.NOTES }}
+          files: "webauthn_mfa-*.zip"

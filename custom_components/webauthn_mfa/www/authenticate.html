@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Passkey — Home Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #111827; color: #f9fafb;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .card {
+      background: #1f2937; border-radius: 12px; padding: 2rem;
+      max-width: 420px; width: 90%; text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+    .logo { font-size: 3rem; margin-bottom: 1rem; }
+    h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .subtitle { color: #9ca3af; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    .btn {
+      width: 100%; padding: 0.875rem; border-radius: 8px; border: none;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-primary:hover:not(:disabled) { background: #2563eb; }
+    .btn-secondary { background: transparent; color: #9ca3af; border: 1px solid #374151; margin-top: 0.75rem; }
+    .remember-label { display: flex; align-items: center; gap: 8px; color: #9ca3af; font-size: 0.875rem; margin-bottom: 0.75rem; cursor: pointer; }
+    .remember-label input { cursor: pointer; width: 16px; height: 16px; }
+    .status { margin-top: 1.5rem; padding: 0.75rem; border-radius: 8px; font-size: 0.875rem; display: none; }
+    .status.error { background: #450a0a; color: #fca5a5; display: block; }
+    .status.success { background: #052e16; color: #86efac; display: block; }
+    .status.info { background: #1e3a5f; color: #93c5fd; display: block; }
+    .token-box {
+      background: #111827; border: 1px solid #374151; border-radius: 8px;
+      padding: 1rem; margin-top: 1rem; display: none;
+    }
+    .token-box.visible { display: block; }
+    .token-label { color: #9ca3af; font-size: 0.8rem; margin-bottom: 0.5rem; }
+    .token-value {
+      font-family: monospace; font-size: 0.9rem; color: #60a5fa;
+      word-break: break-all; background: #1f2937; padding: 0.5rem;
+      border-radius: 4px; cursor: pointer; user-select: all;
+    }
+    .token-hint { color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem; }
+    .spinner {
+      display: inline-block; width: 1rem; height: 1rem;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      margin-right: 0.5rem; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🔑</div>
+    <h1 id="t-title"></h1>
+    <p class="subtitle" id="t-subtitle"></p>
+
+    <label class="remember-label">
+      <input type="checkbox" id="remember-me" checked>
+      <span id="t-remember"></span>
+    </label>
+    <button class="btn btn-primary" id="btn-auth" onclick="startAuth()"></button>
+    <button class="btn btn-secondary" onclick="goBack()" id="btn-back"></button>
+
+    <div class="token-box" id="token-box">
+      <div class="token-label" id="t-token-label"></div>
+      <div class="token-value" id="token-value" onclick="copyToken()"></div>
+      <div class="token-hint" id="copy-hint"></div>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    // ── i18n ────────────────────────────────────────────────────────────────
+    const STRINGS = {
+      en: {
+        title:          "Sign in with a passkey",
+        subtitle:       "Authenticate with your passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+        remember:       "Stay signed in",
+        btnAuth:        "Use my passkey",
+        btnBack:        "← Back to login",
+        tokenLabel:     "Authentication code — paste it into the HA field",
+        copyHint:       "Click to copy",
+        copied:         "✓ Copied to clipboard!",
+        copiedShort:    "✓ Copied!",
+        verifying:      "Verifying...",
+        noSupport:      "Your browser does not support passkeys.",
+        fetchChallenge: "Fetching challenge...",
+        serverError:    "Server error",
+        waiting:        "Waiting for your passkey...",
+        verified:       "✓ Passkey verified! Redirecting...",
+        failed:         "Failed",
+        unknown:        "Unknown error",
+        cancelled:      "Authentication cancelled.",
+        error:          "Error",
+      },
+      fr: {
+        title:          "Connexion par passkey",
+        subtitle:       "Authentifiez-vous avec votre passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+        remember:       "Rester connecté",
+        btnAuth:        "Utiliser ma passkey",
+        btnBack:        "← Retour au login",
+        tokenLabel:     "Code d'authentification — collez-le dans le champ HA",
+        copyHint:       "Cliquez pour copier",
+        copied:         "✓ Copié dans le presse-papier !",
+        copiedShort:    "✓ Copié !",
+        verifying:      "Vérification...",
+        noSupport:      "Votre navigateur ne supporte pas les passkeys.",
+        fetchChallenge: "Récupération du challenge...",
+        serverError:    "Erreur serveur",
+        waiting:        "En attente de votre passkey...",
+        verified:       "✓ Passkey vérifiée ! Redirection...",
+        failed:         "Échec",
+        unknown:        "Erreur inconnue",
+        cancelled:      "Authentification annulée.",
+        error:          "Erreur",
+      },
+      de: {
+        title:          "Mit Passkey anmelden",
+        subtitle:       "Authentifizierung mit Ihrem Passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+        remember:       "Angemeldet bleiben",
+        btnAuth:        "Meinen Passkey verwenden",
+        btnBack:        "← Zurück zur Anmeldung",
+        tokenLabel:     "Authentifizierungscode — in das HA-Feld einfügen",
+        copyHint:       "Zum Kopieren klicken",
+        copied:         "✓ In die Zwischenablage kopiert!",
+        copiedShort:    "✓ Kopiert!",
+        verifying:      "Wird überprüft...",
+        noSupport:      "Ihr Browser unterstützt keine Passkeys.",
+        fetchChallenge: "Challenge wird abgerufen...",
+        serverError:    "Serverfehler",
+        waiting:        "Warten auf Ihren Passkey...",
+        verified:       "✓ Passkey bestätigt! Weiterleitung...",
+        failed:         "Fehlgeschlagen",
+        unknown:        "Unbekannter Fehler",
+        cancelled:      "Authentifizierung abgebrochen.",
+        error:          "Fehler",
+      },
+      es: {
+        title:          "Iniciar sesión con passkey",
+        subtitle:       "Autentícate con tu passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+        remember:       "Mantener sesión iniciada",
+        btnAuth:        "Usar mi passkey",
+        btnBack:        "← Volver al inicio de sesión",
+        tokenLabel:     "Código de autenticación — pégalo en el campo HA",
+        copyHint:       "Haz clic para copiar",
+        copied:         "✓ ¡Copiado al portapapeles!",
+        copiedShort:    "✓ ¡Copiado!",
+        verifying:      "Verificando...",
+        noSupport:      "Tu navegador no admite passkeys.",
+        fetchChallenge: "Obteniendo desafío...",
+        serverError:    "Error del servidor",
+        waiting:        "Esperando tu passkey...",
+        verified:       "✓ ¡Passkey verificada! Redirigiendo...",
+        failed:         "Error",
+        unknown:        "Error desconocido",
+        cancelled:      "Autenticación cancelada.",
+        error:          "Error",
+      },
+      nl: {
+        title:          "Inloggen met passkey",
+        subtitle:       "Authenticeer met uw passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+        remember:       "Aangemeld blijven",
+        btnAuth:        "Mijn passkey gebruiken",
+        btnBack:        "← Terug naar login",
+        tokenLabel:     "Authenticatiecode — plak het in het HA-veld",
+        copyHint:       "Klik om te kopiëren",
+        copied:         "✓ Gekopieerd naar klembord!",
+        copiedShort:    "✓ Gekopieerd!",
+        verifying:      "Verifiëren...",
+        noSupport:      "Uw browser ondersteunt geen passkeys.",
+        fetchChallenge: "Uitdaging ophalen...",
+        serverError:    "Serverfout",
+        waiting:        "Wachten op uw passkey...",
+        verified:       "✓ Passkey geverifieerd! Doorsturen...",
+        failed:         "Mislukt",
+        unknown:        "Onbekende fout",
+        cancelled:      "Authenticatie geannuleerd.",
+        error:          "Fout",
+      },
+    };
+
+    function detectLang() {
+      // 1. Query param ?lang=xx (set by webauthn-login.js from HA's language)
+      const params = new URLSearchParams(window.location.search);
+      const qLang = params.get("lang");
+      if (qLang && STRINGS[qLang]) return qLang;
+
+      // 2. navigator.language (e.g. "fr-FR" → "fr")
+      const navLang = (navigator.language || "en").split("-")[0].toLowerCase();
+      if (STRINGS[navLang]) return navLang;
+
+      return "en";
+    }
+
+    const lang = detectLang();
+    const T = STRINGS[lang] || STRINGS.en;
+
+    // Apply translations to DOM
+    document.documentElement.lang = lang;
+    document.getElementById("t-title").textContent     = T.title;
+    document.getElementById("t-subtitle").textContent  = T.subtitle;
+    document.getElementById("t-remember").textContent  = T.remember;
+    document.getElementById("btn-auth").textContent    = T.btnAuth;
+    document.getElementById("btn-back").textContent    = T.btnBack;
+    document.getElementById("t-token-label").textContent = T.tokenLabel;
+    document.getElementById("copy-hint").textContent   = T.copyHint;
+
+    // ── App logic ───────────────────────────────────────────────────────────
+    const FLOW_ID   = "{{FLOW_ID}}";
+    const RETURN_URL = "{{RETURN_URL}}";
+
+    function setStatus(msg, type = "info") {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.className = `status ${type}`;
+    }
+
+    function setLoading(loading) {
+      const btn = document.getElementById("btn-auth");
+      btn.disabled = loading;
+      btn.innerHTML = loading
+        ? `<span class="spinner"></span>${T.verifying}`
+        : T.btnAuth;
+    }
+
+    function goBack() {
+      sessionStorage.setItem("webauthn_bypass", "1");
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = params.get("return_url") || "/";
+    }
+
+    function bufferToBase64url(buffer) {
+      return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    function base64urlToBuffer(b64) {
+      const b = b64.replace(/-/g, "+").replace(/_/g, "/");
+      return Uint8Array.from(atob(b), c => c.charCodeAt(0)).buffer;
+    }
+
+    function copyToken() {
+      const token = document.getElementById("token-value").textContent;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(token).then(() => {
+          const hint = document.getElementById("copy-hint");
+          hint.textContent = T.copiedShort;
+          hint.style.color = "#86efac";
+        });
+      }
+    }
+
+    async function startAuth() {
+      if (!window.PublicKeyCredential) {
+        setStatus(T.noSupport, "error");
+        return;
+      }
+
+      setLoading(true);
+      setStatus(T.fetchChallenge, "info");
+
+      try {
+        const challengeRes = await fetch("/api/webauthn_mfa/challenge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flow_id: FLOW_ID }),
+        });
+
+        const options = await challengeRes.json();
+
+        if (!challengeRes.ok) {
+          setStatus(options.message || options.error || T.serverError, "error");
+          setLoading(false);
+          return;
+        }
+
+        options.challenge = base64urlToBuffer(options.challenge);
+        if (options.allowCredentials) {
+          options.allowCredentials = options.allowCredentials.map(c => ({
+            ...c, id: base64urlToBuffer(c.id),
+          }));
+        }
+
+        setStatus(T.waiting, "info");
+
+        const credential = await navigator.credentials.get({ publicKey: options });
+
+        setStatus(T.verifying, "info");
+
+        const assertion = {
+          id: credential.id,
+          rawId: bufferToBase64url(credential.rawId),
+          type: credential.type,
+          response: {
+            authenticatorData: bufferToBase64url(credential.response.authenticatorData),
+            clientDataJSON:    bufferToBase64url(credential.response.clientDataJSON),
+            signature:         bufferToBase64url(credential.response.signature),
+            userHandle: credential.response.userHandle
+              ? bufferToBase64url(credential.response.userHandle) : null,
+          },
+        };
+
+        let username = "";
+        if (credential.response.userHandle) {
+          username = new TextDecoder().decode(credential.response.userHandle);
+        }
+
+        const verifyRes = await fetch("/api/webauthn_mfa/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flow_id: FLOW_ID, username, response: assertion }),
+        });
+
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.success && verifyData.token) {
+          setStatus(T.verified, "success");
+          setLoading(false);
+
+          const rememberMe = document.getElementById("remember-me")?.checked ?? true;
+          sessionStorage.setItem("webauthn_pending_token", JSON.stringify({
+            token: verifyData.token,
+            flow_id: FLOW_ID,
+            remember_me: rememberMe,
+          }));
+
+          setTimeout(() => {
+            window.location.href = RETURN_URL || "/auth/authorize";
+          }, 300);
+        } else {
+          setStatus(`${T.failed}: ${verifyData.error || T.unknown}`, "error");
+          setLoading(false);
+        }
+
+      } catch (err) {
+        setStatus(
+          err.name === "NotAllowedError" ? T.cancelled : `${T.error}: ${err.message}`,
+          "error"
+        );
+        setLoading(false);
+      }
+    }
+
+    window.addEventListener("load", () => {
+      if (FLOW_ID && FLOW_ID !== "{{FLOW_ID}}") {
+        setTimeout(startAuth, 300);
+      }
+    });
+  </script>
+</body>
+</html>

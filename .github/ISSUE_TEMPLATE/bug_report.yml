@@ -1,0 +1,74 @@
+name: Bug report
+description: Report something that is not working correctly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug!
+        Before submitting, please check that no existing issue already covers the problem.
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "e.g. 2025.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: integration_version
+    attributes:
+      label: WebAuthn MFA version
+      placeholder: "e.g. 1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: rp_id
+    attributes:
+      label: RP ID / Expected Origin
+      placeholder: "e.g. homeassistant.local / https://homeassistant.local"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: authenticator
+    attributes:
+      label: Passkey type
+      options:
+        - Bitwarden
+        - 1Password
+        - Hardware key (YubiKey, etc.)
+        - Platform authenticator (Face ID, Touch ID, Windows Hello)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Home Assistant logs
+      description: |
+        Enable debug logging by adding to your `configuration.yaml`:
+        ```yaml
+        logger:
+          logs:
+            custom_components.webauthn_mfa: debug
+        ```
+      render: text

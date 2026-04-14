@@ -1,0 +1,28 @@
+{
+  "title": "Authentification WebAuthn / Passkey",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuration WebAuthn / Passkey",
+        "description": "Configurez l'authentification par passkey (WebAuthn / FIDO2) pour Home Assistant.\n\nL'**ID du domaine** doit correspondre à votre domaine (ex. `homeassistant.local` ou `ha.exemple.com`).\nL'**origine attendue** doit être l'URL complète utilisée pour accéder à HA (ex. `https://ha.exemple.com`).",
+        "data": {
+          "rp_id": "ID du domaine (Relying Party ID)",
+          "rp_name": "Nom du service",
+          "expected_origin": "Origine attendue"
+        },
+        "data_description": {
+          "rp_id": "Le nom de domaine de votre instance Home Assistant, sans le schéma ni le port (ex. `homeassistant.local`).",
+          "rp_name": "Un nom lisible affiché dans les invites de passkey (ex. `Home Assistant`).",
+          "expected_origin": "L'URL complète utilisée pour accéder à Home Assistant (ex. `https://ha.exemple.com`)."
+        }
+      }
+    },
+    "error": {
+      "invalid_rp_id": "L'ID du domaine doit être un nom de domaine simple, sans schéma ni port.",
+      "invalid_origin": "L'origine attendue doit commencer par `https://` ou `http://`."
+    },
+    "abort": {
+      "already_configured": "L'authentification WebAuthn / Passkey est déjà configurée."
+    }
+  }
+}
