@@ -6,7 +6,7 @@ import base64
 import logging
 import os
 import secrets
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from aiohttp.web import Request, Response
 from aiohttp.web import Response as AiohttpResponse
@@ -31,8 +31,7 @@ from webauthn.helpers.structs import (
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant
 
-if TYPE_CHECKING:
-    from .const import PROVIDER_TYPE
+from .const import PROVIDER_TYPE
 from .store import WebAuthnStore
 
 _LOGGER = logging.getLogger(__name__)
