@@ -1,0 +1,4 @@
+ha.test:443 {
+    tls /certs/local-cert.pem /certs/local-key.pem
+    reverse_proxy webauthn_mfa_ha_dev:8123
+}

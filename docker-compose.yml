@@ -15,6 +15,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+  
+  caddy:
+    image: caddy:latest
+    container_name: caddy_proxy
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./certs:/certs
+    restart: unless-stopped
 
   test:
     container_name: webauthn_mfa_test
