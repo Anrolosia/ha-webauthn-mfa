@@ -5,6 +5,7 @@ services:
     volumes:
       - ha-config:/config
       - ./custom_components/webauthn_mfa:/config/custom_components/webauthn_mfa
+      - ./dev/ha-config/configuration.yaml:/config/configuration.yaml
     ports:
       - "8123:8123"
     environment:

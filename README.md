@@ -109,9 +109,16 @@ From the **Passkeys** sidebar panel you can:
 
 ### Prerequisites
 
-- Docker and Docker Compose
+#### 1. Update your local hosts file
+You must map the dummy domain `ha.test` to your local machine loopback.
 
-### Quick start
+Add the following line to your operating system's `hosts` file (located at `/etc/hosts` on macOS/Linux or `C:\Windows\System32\drivers\etc\hosts` on Windows):
+
+```text
+127.0.0.1 ha.test
+```
+
+### 2. Docker and Docker Compose
 
 ```bash
 git clone https://github.com/Anrolosia/ha-webauthn-mfa.git
@@ -120,7 +127,7 @@ cp .env.example .env
 docker compose up
 ```
 
-Home Assistant will be available at `http://localhost:8123`. The `custom_components/webauthn_mfa` directory is mounted directly into the container — changes are picked up after a HA restart from **Developer Tools → YAML → Restart**.
+Home Assistant will be available at `https://ha.test`. Since Caddy uses an internal certificate authority, your browser will display an unverified certificate warning, you can bypass the SSL Warning.
 
 ### Running tests
 
