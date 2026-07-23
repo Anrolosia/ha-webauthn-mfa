@@ -3,9 +3,8 @@ services:
     container_name: webauthn_mfa_ha_dev
     image: ghcr.io/home-assistant/home-assistant:stable
     volumes:
-      - ha-config:/config
+      - ./dev/ha-config:/config
       - ./custom_components/webauthn_mfa:/config/custom_components/webauthn_mfa
-      - ./dev/ha-config/configuration.yaml:/config/configuration.yaml
     ports:
       - "8123:8123"
     environment:
@@ -38,6 +37,3 @@ services:
                pytest tests/ -v --tb=short"
     profiles:
       - test
-
-volumes:
-  ha-config:

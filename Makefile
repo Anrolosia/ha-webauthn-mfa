@@ -78,6 +78,19 @@ test:
 	@echo "--- pytest (docker)"
 	docker compose run --rm test
 
+# ── Dev environment ──────────────────────────────────────────
+
+.PHONY: dev-init
+dev-init:
+	@echo "--- Preparing dev/ha-config"
+	mkdir -p dev/ha-config
+	@if [ -f dev/ha-config/configuration.yaml ]; then \
+		echo "dev/ha-config/configuration.yaml already exists, left untouched."; \
+	else \
+		cp dev/configuration.example.yaml dev/ha-config/configuration.yaml; \
+		echo "Created dev/ha-config/configuration.yaml"; \
+	fi
+
 # ── Version ──────────────────────────────────────────────────
 
 .PHONY: version

@@ -1,0 +1,20 @@
+default_config:
+
+logger:
+  default: info
+  logs:
+    custom_components.webauthn_mfa: debug
+
+# Caddy sits in front and terminates TLS for https://ha.test
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+
+# Legacy YAML setup. Remove this block to test the UI config flow from scratch,
+# keep it to test the import path and the deprecation warning.
+webauthn_mfa:
+  rp_id: "ha.test"
+  rp_name: "Home Assistant"
+  expected_origin: "https://ha.test"

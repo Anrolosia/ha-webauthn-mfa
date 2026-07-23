@@ -136,6 +136,7 @@ Add the following line to your operating system's `hosts` file (located at `/etc
 git clone https://github.com/Anrolosia/ha-webauthn-mfa.git
 cd ha-webauthn-mfa
 cp .env.example .env
+make dev-init
 docker compose up
 ```
 
