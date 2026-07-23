@@ -1,0 +1,51 @@
+{
+  "webauthn_mfa": {
+    "auth": {
+      "title": "Zaloguj się za pomocą klucza dostępu",
+      "subtitle": "Uwierzytelnij się za pomocą klucza dostępu\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+      "remember": "Nie wylogowuj mnie",
+      "btnAuth": "Użyj mojego klucza dostępu",
+      "btnBack": "← Wróć do logowania",
+      "tokenLabel": "Kod uwierzytelniający — wklej go w polu Home Assistanta",
+      "copyHint": "Kliknij, aby skopiować",
+      "copied": "✓ Skopiowano do schowka!",
+      "copiedShort": "✓ Skopiowano!",
+      "verifying": "Weryfikacja...",
+      "noSupport": "Twoja przeglądarka nie obsługuje kluczy dostępu.",
+      "fetchChallenge": "Pobieranie wyzwania...",
+      "serverError": "Błąd serwera",
+      "waiting": "Oczekiwanie na klucz dostępu...",
+      "verified": "✓ Klucz dostępu zweryfikowany! Przekierowywanie...",
+      "failed": "Niepowodzenie",
+      "unknown": "Nieznany błąd",
+      "cancelled": "Uwierzytelnianie anulowane.",
+      "error": "Błąd"
+    },
+    "login": {
+      "signing_in": "Logowanie…",
+      "timeout": "Logowanie przekroczyło limit czasu. Spróbuj ponownie.",
+      "back": "Wróć do logowania"
+    },
+    "panel": {
+      "title": "Moje klucze dostępu",
+      "subtitle": "Zaloguj się do Home Assistanta bez hasła.",
+      "registered": "Zarejestrowane klucze dostępu",
+      "empty": "Nie skonfigurowano kluczy dostępu.",
+      "loading": "Wczytywanie...",
+      "add": "Dodaj klucz dostępu",
+      "addBtn": "+ Dodaj klucz dostępu",
+      "placeholder": "Nazwa (np. Mój iPhone, Bitwarden)",
+      "delete": "Usuń",
+      "confirmDelete": "Usunąć ten klucz dostępu?",
+      "deleted": "✓ Usunięto klucz dostępu.",
+      "deleteError": "❌ Nie udało się usunąć klucza dostępu.",
+      "registering": "Rejestrowanie...",
+      "waiting": "⏳ Oczekiwanie na klucz dostępu...",
+      "registered_ok": "✓ Zarejestrowano klucz dostępu \"{name}\"!",
+      "cancelled": "❌ Anulowano.",
+      "noSupport": "❌ Twoja przeglądarka nie obsługuje kluczy dostępu.",
+      "serverError": "Błąd serwera",
+      "regError": "Błąd rejestracji"
+    }
+  }
+}
