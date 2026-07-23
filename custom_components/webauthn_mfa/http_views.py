@@ -32,6 +32,7 @@ from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant
 
 from .const import PROVIDER_TYPE
+from .frontend_translations import async_get_strings, async_resolve_language, js_literal
 from .store import WebAuthnStore
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,10 +45,12 @@ _PENDING_CHALLENGES: dict[str, dict[str, Any]] = {}
 class WebAuthnAuthenticateView(HomeAssistantView):
     """Serve the passkey authentication HTML page.
 
-    ``GET /api/webauthn_mfa/authenticate?flow_id=<id>&return_url=<url>``
+    ``GET /api/webauthn_mfa/authenticate?flow_id=<id>&return_url=<url>&lang=<xx>``
 
     This page is opened automatically by the injected login script when the
-    user selects *Passkey / Security Key* on the HA login form.
+    user selects *Passkey / Security Key* on the HA login form. Strings are
+    resolved server side, because the page runs before authentication and
+    cannot reach the Home Assistant translation websocket.
     """
 
     url = "/api/webauthn_mfa/authenticate"
@@ -65,16 +68,22 @@ class WebAuthnAuthenticateView(HomeAssistantView):
         """Return the HTML authentication page with flow context injected."""
         flow_id = request.rel_url.query.get("flow_id", "")
         return_url = request.rel_url.query.get("return_url", "")
+        requested_lang = request.rel_url.query.get("lang", "")
 
         hass: HomeAssistant = request.app["hass"]
+
+        language = await async_resolve_language(hass, requested_lang)
+        strings = await async_get_strings(hass, language, "auth")
 
         def _read_html(path: str) -> str:
             with open(path, encoding="utf-8") as f:
                 return f.read()
 
         html: str = await hass.async_add_executor_job(_read_html, self._html_path)
-        html = html.replace("{{FLOW_ID}}", flow_id)
-        html = html.replace("{{RETURN_URL}}", return_url)
+        html = html.replace("{{I18N}}", js_literal(strings))
+        html = html.replace("{{LANG}}", js_literal(language))
+        html = html.replace("{{FLOW_ID}}", js_literal(flow_id))
+        html = html.replace("{{RETURN_URL}}", js_literal(return_url))
 
         return AiohttpResponse(text=html, content_type="text/html")
 
@@ -502,3 +511,27 @@ class WebAuthnDeleteView(HomeAssistantView):
 
         await self._store.async_remove_credential(user.id, full_id)
         return self.json({"success": True})
+
+
+class WebAuthnStringsView(HomeAssistantView):
+    """Serve frontend strings for the authenticated user's language.
+
+    ``GET /api/webauthn_mfa/strings?section=panel&lang=<xx>``
+    """
+
+    url = "/api/webauthn_mfa/strings"
+    name = "api:webauthn_mfa:strings"
+    requires_auth = True
+
+    _ALLOWED_SECTIONS = frozenset({"auth", "login", "panel"})
+
+    async def get(self, request: Request) -> Response:
+        """Return one section of the frontend strings."""
+        section = request.rel_url.query.get("section", "panel")
+        language = request.rel_url.query.get("lang", "")
+
+        if section not in self._ALLOWED_SECTIONS:
+            return self.json({"error": "unknown_section"}, status_code=400)
+
+        hass: HomeAssistant = request.app["hass"]
+        return self.json(await async_get_strings(hass, language, section))

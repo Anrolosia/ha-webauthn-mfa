@@ -4,25 +4,50 @@
     "step": {
       "user": {
         "title": "WebAuthn / Passkey Authentication Setup",
-        "description": "Configure passkey (WebAuthn / FIDO2) authentication for Home Assistant.\n\n**RP ID** must match your domain (e.g. `homeassistant.local`).\n**Expected origin** must be the full URL users access HA from.",
+        "description": "Configure passkey (WebAuthn / FIDO2) authentication for Home Assistant.\n\nBoth values must match the address you use to reach Home Assistant, otherwise the passkey ceremony fails in the browser with no useful error.",
         "data": {
           "rp_id": "Relying Party ID",
           "rp_name": "Relying Party Name",
           "expected_origin": "Expected Origin"
         },
         "data_description": {
-          "rp_id": "The domain name of your Home Assistant instance, without scheme or port (e.g. `homeassistant.local`).",
-          "rp_name": "A human-readable name shown in passkey prompts (e.g. `Home Assistant`).",
-          "expected_origin": "The full URL users use to access Home Assistant, including scheme and port if needed."
+          "rp_id": "The domain name of your Home Assistant instance, without scheme or port. Use `homeassistant.local` or `ha.example.com`.",
+          "rp_name": "A human-readable name shown in passkey prompts, such as `Home Assistant`.",
+          "expected_origin": "The full URL you use to reach Home Assistant, including the scheme, and the port when it is not the default."
         }
       }
     },
     "error": {
-      "invalid_rp_id": "RP ID must be a plain domain name without scheme or port.",
-      "invalid_origin": "Expected origin must start with `https://` or `http://`."
+      "invalid_rp_id": "RP ID must be a plain domain name, without scheme or port.",
+      "invalid_origin": "Expected origin must start with `https://` or `http://` and contain a host name.",
+      "origin_mismatch": "The host in the expected origin must be the RP ID itself, or a subdomain of it. WebAuthn rejects any other combination."
     },
     "abort": {
-      "already_configured": "WebAuthn / Passkey Authentication is already configured."
+      "already_configured": "WebAuthn / Passkey Authentication is already configured.",
+      "invalid_yaml": "The `webauthn_mfa` block in `configuration.yaml` is invalid and could not be imported. Fix it, or remove it and set the integration up from the UI."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "WebAuthn / Passkey Settings",
+        "description": "Update the domain settings used for passkey ceremonies.\n\nHome Assistant must be restarted for the new values to take effect.\n\nChanging the RP ID invalidates every passkey already registered on this instance. They are cryptographically bound to the old domain and will have to be registered again.",
+        "data": {
+          "rp_id": "Relying Party ID",
+          "rp_name": "Relying Party Name",
+          "expected_origin": "Expected Origin"
+        },
+        "data_description": {
+          "rp_id": "The domain name of your Home Assistant instance, without scheme or port. Use `homeassistant.local` or `ha.example.com`.",
+          "rp_name": "A human-readable name shown in passkey prompts, such as `Home Assistant`.",
+          "expected_origin": "The full URL you use to reach Home Assistant, including the scheme, and the port when it is not the default."
+        }
+      }
+    },
+    "error": {
+      "invalid_rp_id": "RP ID must be a plain domain name, without scheme or port.",
+      "invalid_origin": "Expected origin must start with `https://` or `http://` and contain a host name.",
+      "origin_mismatch": "The host in the expected origin must be the RP ID itself, or a subdomain of it. WebAuthn rejects any other combination."
     }
   }
 }

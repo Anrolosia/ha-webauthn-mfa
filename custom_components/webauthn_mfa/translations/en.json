@@ -13,7 +13,7 @@
         "data_description": {
           "rp_id": "The domain name of your Home Assistant instance, without scheme or port. Use `homeassistant.local` or `ha.example.com`.",
           "rp_name": "A human-readable name shown in passkey prompts, such as `Home Assistant`.",
-          "expected_origin": "The full URL you use to reach Home Assistant, including the scheme and the port if it is not the default. Use `https://ha.example.com` or `https://ha.example.com:8123`."
+          "expected_origin": "The full URL you use to reach Home Assistant, including the scheme, and the port when it is not the default."
         }
       }
     },
@@ -40,7 +40,7 @@
         "data_description": {
           "rp_id": "The domain name of your Home Assistant instance, without scheme or port. Use `homeassistant.local` or `ha.example.com`.",
           "rp_name": "A human-readable name shown in passkey prompts, such as `Home Assistant`.",
-          "expected_origin": "The full URL you use to reach Home Assistant, including the scheme and the port if it is not the default. Use `https://ha.example.com` or `https://ha.example.com:8123`."
+          "expected_origin": "The full URL you use to reach Home Assistant, including the scheme, and the port when it is not the default."
         }
       }
     },

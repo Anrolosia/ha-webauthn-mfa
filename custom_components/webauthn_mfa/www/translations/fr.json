@@ -1,0 +1,51 @@
+{
+  "webauthn_mfa": {
+    "auth": {
+      "title": "Connexion par passkey",
+      "subtitle": "Authentifiez-vous avec votre passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+      "remember": "Rester connecté",
+      "btnAuth": "Utiliser ma passkey",
+      "btnBack": "← Retour au login",
+      "tokenLabel": "Code d'authentification — collez-le dans le champ HA",
+      "copyHint": "Cliquez pour copier",
+      "copied": "✓ Copié dans le presse-papier !",
+      "copiedShort": "✓ Copié !",
+      "verifying": "Vérification...",
+      "noSupport": "Votre navigateur ne supporte pas les passkeys.",
+      "fetchChallenge": "Récupération du challenge...",
+      "serverError": "Erreur serveur",
+      "waiting": "En attente de votre passkey...",
+      "verified": "✓ Passkey vérifiée ! Redirection...",
+      "failed": "Échec",
+      "unknown": "Erreur inconnue",
+      "cancelled": "Authentification annulée.",
+      "error": "Erreur"
+    },
+    "login": {
+      "signing_in": "Connexion en cours…",
+      "timeout": "Délai de connexion dépassé. Veuillez réessayer.",
+      "back": "Retour à la connexion"
+    },
+    "panel": {
+      "title": "Mes Passkeys",
+      "subtitle": "Connectez-vous à Home Assistant sans mot de passe.",
+      "registered": "Passkeys enregistrées",
+      "empty": "Aucune passkey enregistrée.",
+      "loading": "Chargement...",
+      "add": "Ajouter une passkey",
+      "addBtn": "+ Ajouter une passkey",
+      "placeholder": "Nom (ex : Mon iPhone, Bitwarden)",
+      "delete": "Supprimer",
+      "confirmDelete": "Supprimer cette passkey ?",
+      "deleted": "✓ Passkey supprimée.",
+      "deleteError": "❌ Erreur lors de la suppression.",
+      "registering": "Enregistrement...",
+      "waiting": "⏳ En attente de votre passkey...",
+      "registered_ok": "✓ Passkey « {name} » enregistrée !",
+      "cancelled": "❌ Annulé.",
+      "noSupport": "❌ Votre navigateur ne supporte pas les passkeys.",
+      "serverError": "Erreur serveur",
+      "regError": "Erreur d'enregistrement"
+    }
+  }
+}

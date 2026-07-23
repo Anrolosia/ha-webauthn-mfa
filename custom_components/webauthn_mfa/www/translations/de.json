@@ -1,0 +1,51 @@
+{
+  "webauthn_mfa": {
+    "auth": {
+      "title": "Mit Passkey anmelden",
+      "subtitle": "Authentifizierung mit Ihrem Passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+      "remember": "Angemeldet bleiben",
+      "btnAuth": "Meinen Passkey verwenden",
+      "btnBack": "← Zurück zur Anmeldung",
+      "tokenLabel": "Authentifizierungscode — in das HA-Feld einfügen",
+      "copyHint": "Zum Kopieren klicken",
+      "copied": "✓ In die Zwischenablage kopiert!",
+      "copiedShort": "✓ Kopiert!",
+      "verifying": "Wird überprüft...",
+      "noSupport": "Ihr Browser unterstützt keine Passkeys.",
+      "fetchChallenge": "Challenge wird abgerufen...",
+      "serverError": "Serverfehler",
+      "waiting": "Warten auf Ihren Passkey...",
+      "verified": "✓ Passkey bestätigt! Weiterleitung...",
+      "failed": "Fehlgeschlagen",
+      "unknown": "Unbekannter Fehler",
+      "cancelled": "Authentifizierung abgebrochen.",
+      "error": "Fehler"
+    },
+    "login": {
+      "signing_in": "Anmeldung läuft…",
+      "timeout": "Zeitüberschreitung bei der Anmeldung. Bitte erneut versuchen.",
+      "back": "Zurück zur Anmeldung"
+    },
+    "panel": {
+      "title": "Meine Passkeys",
+      "subtitle": "Melden Sie sich ohne Passwort bei Home Assistant an.",
+      "registered": "Registrierte Passkeys",
+      "empty": "Noch keine Passkeys registriert.",
+      "loading": "Laden...",
+      "add": "Passkey hinzufügen",
+      "addBtn": "+ Passkey hinzufügen",
+      "placeholder": "Name (z. B. Mein iPhone, Bitwarden)",
+      "delete": "Löschen",
+      "confirmDelete": "Diesen Passkey löschen?",
+      "deleted": "✓ Passkey gelöscht.",
+      "deleteError": "❌ Löschen fehlgeschlagen.",
+      "registering": "Registrierung...",
+      "waiting": "⏳ Warten auf Ihren Passkey...",
+      "registered_ok": "✓ Passkey „{name}\" registriert!",
+      "cancelled": "❌ Abgebrochen.",
+      "noSupport": "❌ Ihr Browser unterstützt keine Passkeys.",
+      "serverError": "Serverfehler",
+      "regError": "Registrierungsfehler"
+    }
+  }
+}

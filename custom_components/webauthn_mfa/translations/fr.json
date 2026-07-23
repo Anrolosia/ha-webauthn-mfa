@@ -13,7 +13,7 @@
         "data_description": {
           "rp_id": "Le nom de domaine de votre instance Home Assistant, sans le schéma ni le port. Utilisez `homeassistant.local` ou `ha.exemple.com`.",
           "rp_name": "Un nom lisible affiché dans les invites de passkey, comme `Home Assistant`.",
-          "expected_origin": "L'URL complète utilisée pour joindre Home Assistant, avec le schéma et le port s'il n'est pas celui par défaut. Utilisez `https://ha.exemple.com` ou `https://ha.exemple.com:8123`."
+          "expected_origin": "L'URL complète utilisée pour joindre Home Assistant, avec le schéma, et le port s'il n'est pas celui par défaut."
         }
       }
     },
@@ -40,7 +40,7 @@
         "data_description": {
           "rp_id": "Le nom de domaine de votre instance Home Assistant, sans le schéma ni le port. Utilisez `homeassistant.local` ou `ha.exemple.com`.",
           "rp_name": "Un nom lisible affiché dans les invites de passkey, comme `Home Assistant`.",
-          "expected_origin": "L'URL complète utilisée pour joindre Home Assistant, avec le schéma et le port s'il n'est pas celui par défaut. Utilisez `https://ha.exemple.com` ou `https://ha.exemple.com:8123`."
+          "expected_origin": "L'URL complète utilisée pour joindre Home Assistant, avec le schéma, et le port s'il n'est pas celui par défaut."
         }
       }
     },

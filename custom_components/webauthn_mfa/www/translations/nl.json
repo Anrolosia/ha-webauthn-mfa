@@ -1,0 +1,51 @@
+{
+  "webauthn_mfa": {
+    "auth": {
+      "title": "Inloggen met passkey",
+      "subtitle": "Authenticeer met uw passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+      "remember": "Aangemeld blijven",
+      "btnAuth": "Mijn passkey gebruiken",
+      "btnBack": "← Terug naar login",
+      "tokenLabel": "Authenticatiecode — plak het in het HA-veld",
+      "copyHint": "Klik om te kopiëren",
+      "copied": "✓ Gekopieerd naar klembord!",
+      "copiedShort": "✓ Gekopieerd!",
+      "verifying": "Verifiëren...",
+      "noSupport": "Uw browser ondersteunt geen passkeys.",
+      "fetchChallenge": "Uitdaging ophalen...",
+      "serverError": "Serverfout",
+      "waiting": "Wachten op uw passkey...",
+      "verified": "✓ Passkey geverifieerd! Doorsturen...",
+      "failed": "Mislukt",
+      "unknown": "Onbekende fout",
+      "cancelled": "Authenticatie geannuleerd.",
+      "error": "Fout"
+    },
+    "login": {
+      "signing_in": "Bezig met inloggen…",
+      "timeout": "Time-out bij het inloggen. Probeer het opnieuw.",
+      "back": "Terug naar login"
+    },
+    "panel": {
+      "title": "Mijn Passkeys",
+      "subtitle": "Log in bij Home Assistant zonder wachtwoord.",
+      "registered": "Geregistreerde passkeys",
+      "empty": "Nog geen passkeys geregistreerd.",
+      "loading": "Laden...",
+      "add": "Passkey toevoegen",
+      "addBtn": "+ Passkey toevoegen",
+      "placeholder": "Naam (bijv. Mijn iPhone, Bitwarden)",
+      "delete": "Verwijderen",
+      "confirmDelete": "Deze passkey verwijderen?",
+      "deleted": "✓ Passkey verwijderd.",
+      "deleteError": "❌ Verwijderen mislukt.",
+      "registering": "Registreren...",
+      "waiting": "⏳ Wachten op uw passkey...",
+      "registered_ok": "✓ Passkey \"{name}\" geregistreerd!",
+      "cancelled": "❌ Geannuleerd.",
+      "noSupport": "❌ Uw browser ondersteunt geen passkeys.",
+      "serverError": "Serverfout",
+      "regError": "Registratiefout"
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "webauthn_mfa": {
+    "auth": {
+      "title": "Iniciar sesión con passkey",
+      "subtitle": "Autentícate con tu passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+      "remember": "Mantener sesión iniciada",
+      "btnAuth": "Usar mi passkey",
+      "btnBack": "← Volver al inicio de sesión",
+      "tokenLabel": "Código de autenticación — pégalo en el campo HA",
+      "copyHint": "Haz clic para copiar",
+      "copied": "✓ ¡Copiado al portapapeles!",
+      "copiedShort": "✓ ¡Copiado!",
+      "verifying": "Verificando...",
+      "noSupport": "Tu navegador no admite passkeys.",
+      "fetchChallenge": "Obteniendo desafío...",
+      "serverError": "Error del servidor",
+      "waiting": "Esperando tu passkey...",
+      "verified": "✓ ¡Passkey verificada! Redirigiendo...",
+      "failed": "Error",
+      "unknown": "Error desconocido",
+      "cancelled": "Autenticación cancelada.",
+      "error": "Error"
+    },
+    "login": {
+      "signing_in": "Iniciando sesión…",
+      "timeout": "Se agotó el tiempo de inicio de sesión. Inténtalo de nuevo.",
+      "back": "Volver al inicio de sesión"
+    },
+    "panel": {
+      "title": "Mis Passkeys",
+      "subtitle": "Inicia sesión en Home Assistant sin contraseña.",
+      "registered": "Passkeys registradas",
+      "empty": "No hay passkeys registradas.",
+      "loading": "Cargando...",
+      "add": "Agregar passkey",
+      "addBtn": "+ Agregar passkey",
+      "placeholder": "Nombre (ej: Mi iPhone, Bitwarden)",
+      "delete": "Eliminar",
+      "confirmDelete": "¿Eliminar esta passkey?",
+      "deleted": "✓ Passkey eliminada.",
+      "deleteError": "❌ Error al eliminar la passkey.",
+      "registering": "Registrando...",
+      "waiting": "⏳ Esperando tu passkey...",
+      "registered_ok": "✓ Passkey \"{name}\" registrada!",
+      "cancelled": "❌ Cancelado.",
+      "noSupport": "❌ Tu navegador no admite passkeys.",
+      "serverError": "Error del servidor",
+      "regError": "Error de registro"
+    }
+  }
+}

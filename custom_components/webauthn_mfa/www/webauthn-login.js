@@ -21,19 +21,8 @@
   if (document.querySelector("[" + SCRIPT_TAG + "]")) return;
   document.documentElement.setAttribute(SCRIPT_TAG, "1");
 
-  // ── i18n (overlay strings only) ───────────────────────────────────────
-  const I18N = {
-    en: {
-      signing_in: "Signing in…",
-      timeout: "Sign-in timed out. Please try again.",
-      back: "Back to login",
-    },
-    fr: {
-      signing_in: "Connexion en cours…",
-      timeout: "Délai de connexion dépassé. Veuillez réessayer.",
-      back: "Retour à la connexion",
-    },
-  };
+  // ── i18n (injected by the integration as window.__WEBAUTHN_I18N__) ─────
+  const I18N = window.__WEBAUTHN_I18N__ || {};
 
   function _lang() {
     const l = (document.documentElement.lang || navigator.language || "en")
@@ -42,7 +31,7 @@
   }
 
   function _t(key) {
-    return (I18N[_lang()] || I18N.en)[key];
+    return (I18N[_lang()] || I18N.en || {})[key] || "";
   }
 
   // ── Full-screen overlay ───────────────────────────────────────────────

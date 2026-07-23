@@ -29,6 +29,10 @@ from typing import Any
 from aiohttp.web import Response as AiohttpResponse
 import voluptuous as vol
 
+from custom_components.webauthn_mfa.frontend_translations import (
+    async_get_all_strings,
+    js_literal,
+)
 from homeassistant import data_entry_flow
 from homeassistant.components.auth import DOMAIN as AUTH_DOMAIN
 from homeassistant.components.auth import indieauth
@@ -38,8 +42,8 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.http.data_validator import RequestDataValidator
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.typing import ConfigType
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.typing import ConfigType
 
 from . import panel as panel_module
 from .const import (
@@ -56,6 +60,7 @@ from .http_views import (
     WebAuthnListView,
     WebAuthnRegisterChallengeView,
     WebAuthnRegisterVerifyView,
+    WebAuthnStringsView,
     WebAuthnVerifyView,
 )
 from .provider import WebAuthnAuthProvider
@@ -196,6 +201,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     hass.http.register_view(WebAuthnListView(store))
     hass.http.register_view(WebAuthnDeleteView(store))
+    hass.http.register_view(WebAuthnStringsView())
 
     # 5. Inject the login helper script into /auth/authorize.
     www_path = os.path.join(os.path.dirname(__file__), "www")
@@ -258,7 +264,11 @@ async def _inject_login_script(hass: HomeAssistant, www_path: str) -> None:
             return f.read()
 
     js_content: str = await hass.async_add_executor_job(_read_file, js_path)
-    script_tag = f'<script type="module">{js_content}</script>'
+    i18n = await async_get_all_strings(hass, "login")
+    script_tag = (
+        f"<script>window.__WEBAUTHN_I18N__={js_literal(i18n)};</script>"
+        f'<script type="module">{js_content}</script>'
+    )
 
     for resource in hass.http.app.router._resources:  # noqa: SLF001
         if getattr(resource, "canonical", None) != "/auth/authorize":

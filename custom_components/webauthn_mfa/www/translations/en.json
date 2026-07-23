@@ -1,0 +1,51 @@
+{
+  "webauthn_mfa": {
+    "auth": {
+      "title": "Sign in with a passkey",
+      "subtitle": "Authenticate with your passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
+      "remember": "Stay signed in",
+      "btnAuth": "Use my passkey",
+      "btnBack": "← Back to login",
+      "tokenLabel": "Authentication code — paste it into the HA field",
+      "copyHint": "Click to copy",
+      "copied": "✓ Copied to clipboard!",
+      "copiedShort": "✓ Copied!",
+      "verifying": "Verifying...",
+      "noSupport": "Your browser does not support passkeys.",
+      "fetchChallenge": "Fetching challenge...",
+      "serverError": "Server error",
+      "waiting": "Waiting for your passkey...",
+      "verified": "✓ Passkey verified! Redirecting...",
+      "failed": "Failed",
+      "unknown": "Unknown error",
+      "cancelled": "Authentication cancelled.",
+      "error": "Error"
+    },
+    "login": {
+      "signing_in": "Signing in…",
+      "timeout": "Sign-in timed out. Please try again.",
+      "back": "Back to login"
+    },
+    "panel": {
+      "title": "My Passkeys",
+      "subtitle": "Sign in to Home Assistant without a password.",
+      "registered": "Registered passkeys",
+      "empty": "No passkeys registered yet.",
+      "loading": "Loading...",
+      "add": "Add a passkey",
+      "addBtn": "+ Add passkey",
+      "placeholder": "Name (e.g. My iPhone, Bitwarden)",
+      "delete": "Delete",
+      "confirmDelete": "Delete this passkey?",
+      "deleted": "✓ Passkey deleted.",
+      "deleteError": "❌ Failed to delete passkey.",
+      "registering": "Registering...",
+      "waiting": "⏳ Waiting for your passkey...",
+      "registered_ok": "✓ Passkey \"{name}\" registered!",
+      "cancelled": "❌ Cancelled.",
+      "noSupport": "❌ Your browser does not support passkeys.",
+      "serverError": "Server error",
+      "regError": "Registration error"
+    }
+  }
+}

@@ -77,133 +77,11 @@
   </div>
 
   <script>
-    // ── i18n ────────────────────────────────────────────────────────────────
-    const STRINGS = {
-      en: {
-        title:          "Sign in with a passkey",
-        subtitle:       "Authenticate with your passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
-        remember:       "Stay signed in",
-        btnAuth:        "Use my passkey",
-        btnBack:        "← Back to login",
-        tokenLabel:     "Authentication code — paste it into the HA field",
-        copyHint:       "Click to copy",
-        copied:         "✓ Copied to clipboard!",
-        copiedShort:    "✓ Copied!",
-        verifying:      "Verifying...",
-        noSupport:      "Your browser does not support passkeys.",
-        fetchChallenge: "Fetching challenge...",
-        serverError:    "Server error",
-        waiting:        "Waiting for your passkey...",
-        verified:       "✓ Passkey verified! Redirecting...",
-        failed:         "Failed",
-        unknown:        "Unknown error",
-        cancelled:      "Authentication cancelled.",
-        error:          "Error",
-      },
-      fr: {
-        title:          "Connexion par passkey",
-        subtitle:       "Authentifiez-vous avec votre passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
-        remember:       "Rester connecté",
-        btnAuth:        "Utiliser ma passkey",
-        btnBack:        "← Retour au login",
-        tokenLabel:     "Code d'authentification — collez-le dans le champ HA",
-        copyHint:       "Cliquez pour copier",
-        copied:         "✓ Copié dans le presse-papier !",
-        copiedShort:    "✓ Copié !",
-        verifying:      "Vérification...",
-        noSupport:      "Votre navigateur ne supporte pas les passkeys.",
-        fetchChallenge: "Récupération du challenge...",
-        serverError:    "Erreur serveur",
-        waiting:        "En attente de votre passkey...",
-        verified:       "✓ Passkey vérifiée ! Redirection...",
-        failed:         "Échec",
-        unknown:        "Erreur inconnue",
-        cancelled:      "Authentification annulée.",
-        error:          "Erreur",
-      },
-      de: {
-        title:          "Mit Passkey anmelden",
-        subtitle:       "Authentifizierung mit Ihrem Passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
-        remember:       "Angemeldet bleiben",
-        btnAuth:        "Meinen Passkey verwenden",
-        btnBack:        "← Zurück zur Anmeldung",
-        tokenLabel:     "Authentifizierungscode — in das HA-Feld einfügen",
-        copyHint:       "Zum Kopieren klicken",
-        copied:         "✓ In die Zwischenablage kopiert!",
-        copiedShort:    "✓ Kopiert!",
-        verifying:      "Wird überprüft...",
-        noSupport:      "Ihr Browser unterstützt keine Passkeys.",
-        fetchChallenge: "Challenge wird abgerufen...",
-        serverError:    "Serverfehler",
-        waiting:        "Warten auf Ihren Passkey...",
-        verified:       "✓ Passkey bestätigt! Weiterleitung...",
-        failed:         "Fehlgeschlagen",
-        unknown:        "Unbekannter Fehler",
-        cancelled:      "Authentifizierung abgebrochen.",
-        error:          "Fehler",
-      },
-      es: {
-        title:          "Iniciar sesión con passkey",
-        subtitle:       "Autentícate con tu passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
-        remember:       "Mantener sesión iniciada",
-        btnAuth:        "Usar mi passkey",
-        btnBack:        "← Volver al inicio de sesión",
-        tokenLabel:     "Código de autenticación — pégalo en el campo HA",
-        copyHint:       "Haz clic para copiar",
-        copied:         "✓ ¡Copiado al portapapeles!",
-        copiedShort:    "✓ ¡Copiado!",
-        verifying:      "Verificando...",
-        noSupport:      "Tu navegador no admite passkeys.",
-        fetchChallenge: "Obteniendo desafío...",
-        serverError:    "Error del servidor",
-        waiting:        "Esperando tu passkey...",
-        verified:       "✓ ¡Passkey verificada! Redirigiendo...",
-        failed:         "Error",
-        unknown:        "Error desconocido",
-        cancelled:      "Autenticación cancelada.",
-        error:          "Error",
-      },
-      nl: {
-        title:          "Inloggen met passkey",
-        subtitle:       "Authenticeer met uw passkey\n(Bitwarden, Face ID, Touch ID, YubiKey...)",
-        remember:       "Aangemeld blijven",
-        btnAuth:        "Mijn passkey gebruiken",
-        btnBack:        "← Terug naar login",
-        tokenLabel:     "Authenticatiecode — plak het in het HA-veld",
-        copyHint:       "Klik om te kopiëren",
-        copied:         "✓ Gekopieerd naar klembord!",
-        copiedShort:    "✓ Gekopieerd!",
-        verifying:      "Verifiëren...",
-        noSupport:      "Uw browser ondersteunt geen passkeys.",
-        fetchChallenge: "Uitdaging ophalen...",
-        serverError:    "Serverfout",
-        waiting:        "Wachten op uw passkey...",
-        verified:       "✓ Passkey geverifieerd! Doorsturen...",
-        failed:         "Mislukt",
-        unknown:        "Onbekende fout",
-        cancelled:      "Authenticatie geannuleerd.",
-        error:          "Fout",
-      },
-    };
-
-    function detectLang() {
-      // 1. Query param ?lang=xx (set by webauthn-login.js from HA's language)
-      const params = new URLSearchParams(window.location.search);
-      const qLang = params.get("lang");
-      if (qLang && STRINGS[qLang]) return qLang;
-
-      // 2. navigator.language (e.g. "fr-FR" → "fr")
-      const navLang = (navigator.language || "en").split("-")[0].toLowerCase();
-      if (STRINGS[navLang]) return navLang;
-
-      return "en";
-    }
-
-    const lang = detectLang();
-    const T = STRINGS[lang] || STRINGS.en;
+    // ── i18n (injected server side from www/translations/<lang>.json) ──────
+    const T = {{I18N}};
+    document.documentElement.lang = {{LANG}};
 
     // Apply translations to DOM
-    document.documentElement.lang = lang;
     document.getElementById("t-title").textContent     = T.title;
     document.getElementById("t-subtitle").textContent  = T.subtitle;
     document.getElementById("t-remember").textContent  = T.remember;
@@ -213,8 +91,8 @@
     document.getElementById("copy-hint").textContent   = T.copyHint;
 
     // ── App logic ───────────────────────────────────────────────────────────
-    const FLOW_ID   = "{{FLOW_ID}}";
-    const RETURN_URL = "{{RETURN_URL}}";
+    const FLOW_ID    = {{FLOW_ID}};
+    const RETURN_URL = {{RETURN_URL}};
 
     function setStatus(msg, type = "info") {
       const el = document.getElementById("status");
@@ -349,7 +227,7 @@
     }
 
     window.addEventListener("load", () => {
-      if (FLOW_ID && FLOW_ID !== "{{FLOW_ID}}") {
+      if (FLOW_ID) {
         setTimeout(startAuth, 300);
       }
     });

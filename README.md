@@ -21,7 +21,7 @@ This integration injects a WebAuthn auth provider into Home Assistant at startup
 - **Dedicated sidebar panel** — register, rename, and delete passkeys without leaving Home Assistant.
 - **Persistent sessions** — the "Stay signed in" option works correctly alongside the native HA Service Worker token flow.
 - **Cross-platform** — any modern browser (Chrome, Firefox, Safari, Edge) on desktop or mobile.
-- **Multilingual authentication page** — the passkey prompt page automatically matches the Home Assistant UI language (English, French, German, Spanish, Dutch).
+- **Fully multilingual frontend** — the login overlay, the passkey prompt page, and the sidebar panel all follow the Home Assistant UI language (English, French, German, Spanish, Dutch).
 
 ## Requirements
 
@@ -174,6 +174,8 @@ logger:
 ## Contributing
 
 Pull requests and issues are welcome! Please open an issue before submitting a large change.
+
+Adding a language is a great first contribution and does not require any Python. See [CONTRIBUTING.md](CONTRIBUTING.md) for the two translation directories and what belongs in each.
 
 ## License
 

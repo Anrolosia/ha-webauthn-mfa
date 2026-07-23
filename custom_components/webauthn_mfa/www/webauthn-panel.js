@@ -2,121 +2,6 @@
  * WebAuthn MFA — Sidebar panel for passkey management.
  */
 
-// ── i18n ──────────────────────────────────────────────────────────────────────
-const STRINGS = {
-  en: {
-    title:          "My Passkeys",
-    subtitle:       "Sign in to Home Assistant without a password.",
-    registered:     "Registered passkeys",
-    empty:          "No passkeys registered yet.",
-    loading:        "Loading...",
-    add:            "Add a passkey",
-    addBtn:         "+ Add passkey",
-    placeholder:    "Name (e.g. My iPhone, Bitwarden)",
-    delete:         "Delete",
-    confirmDelete:  "Delete this passkey?",
-    deleted:        "✓ Passkey deleted.",
-    deleteError:    "❌ Failed to delete passkey.",
-    registering:    "Registering...",
-    waiting:        "⏳ Waiting for your passkey...",
-    registered_ok:  (name) => `✓ Passkey "${name}" registered!`,
-    cancelled:      "❌ Cancelled.",
-    noSupport:      "❌ Your browser does not support passkeys.",
-    serverError:    "Server error",
-    regError:       "Registration error",
-  },
-  fr: {
-    title:          "Mes Passkeys",
-    subtitle:       "Connectez-vous à Home Assistant sans mot de passe.",
-    registered:     "Passkeys enregistrées",
-    empty:          "Aucune passkey enregistrée.",
-    loading:        "Chargement...",
-    add:            "Ajouter une passkey",
-    addBtn:         "+ Ajouter une passkey",
-    placeholder:    "Nom (ex : Mon iPhone, Bitwarden)",
-    delete:         "Supprimer",
-    confirmDelete:  "Supprimer cette passkey ?",
-    deleted:        "✓ Passkey supprimée.",
-    deleteError:    "❌ Erreur lors de la suppression.",
-    registering:    "Enregistrement...",
-    waiting:        "⏳ En attente de votre passkey...",
-    registered_ok:  (name) => `✓ Passkey « ${name} » enregistrée !`,
-    cancelled:      "❌ Annulé.",
-    noSupport:      "❌ Votre navigateur ne supporte pas les passkeys.",
-    serverError:    "Erreur serveur",
-    regError:       "Erreur d'enregistrement",
-  },
-  de: {
-    title:          "Meine Passkeys",
-    subtitle:       "Melden Sie sich ohne Passwort bei Home Assistant an.",
-    registered:     "Registrierte Passkeys",
-    empty:          "Noch keine Passkeys registriert.",
-    loading:        "Laden...",
-    add:            "Passkey hinzufügen",
-    addBtn:         "+ Passkey hinzufügen",
-    placeholder:    "Name (z. B. Mein iPhone, Bitwarden)",
-    delete:         "Löschen",
-    confirmDelete:  "Diesen Passkey löschen?",
-    deleted:        "✓ Passkey gelöscht.",
-    deleteError:    "❌ Löschen fehlgeschlagen.",
-    registering:    "Registrierung...",
-    waiting:        "⏳ Warten auf Ihren Passkey...",
-    registered_ok:  (name) => `✓ Passkey „${name}" registriert!`,
-    cancelled:      "❌ Abgebrochen.",
-    noSupport:      "❌ Ihr Browser unterstützt keine Passkeys.",
-    serverError:    "Serverfehler",
-    regError:       "Registrierungsfehler",
-  },
-  es: {
-    title:          "Mis Passkeys",
-    subtitle:       "Inicia sesión en Home Assistant sin contraseña.",
-    registered:     "Passkeys registradas",
-    empty:          "No hay passkeys registradas.",
-    loading:        "Cargando...",
-    add:            "Agregar passkey",
-    addBtn:         "+ Agregar passkey",
-    placeholder:    "Nombre (ej: Mi iPhone, Bitwarden)",
-    delete:         "Eliminar",
-    confirmDelete:  "¿Eliminar esta passkey?",
-    deleted:        "✓ Passkey eliminada.",
-    deleteError:    "❌ Error al eliminar la passkey.",
-    registering:    "Registrando...",
-    waiting:        "⏳ Esperando tu passkey...",
-    registered_ok:  (name) => `✓ Passkey "${name}" registrada!`,
-    cancelled:      "❌ Cancelado.",
-    noSupport:      "❌ Tu navegador no admite passkeys.",
-    serverError:    "Error del servidor",
-    regError:       "Error de registro",
-  },
-  nl: {
-    title:          "Mijn Passkeys",
-    subtitle:       "Log in bij Home Assistant zonder wachtwoord.",
-    registered:     "Geregistreerde passkeys",
-    empty:          "Nog geen passkeys geregistreerd.",
-    loading:        "Laden...",
-    add:            "Passkey toevoegen",
-    addBtn:         "+ Passkey toevoegen",
-    placeholder:    "Naam (bijv. Mijn iPhone, Bitwarden)",
-    delete:         "Verwijderen",
-    confirmDelete:  "Deze passkey verwijderen?",
-    deleted:        "✓ Passkey verwijderd.",
-    deleteError:    "❌ Verwijderen mislukt.",
-    registering:    "Registreren...",
-    waiting:        "⏳ Wachten op uw passkey...",
-    registered_ok:  (name) => `✓ Passkey "${name}" geregistreerd!`,
-    cancelled:      "❌ Geannuleerd.",
-    noSupport:      "❌ Uw browser ondersteunt geen passkeys.",
-    serverError:    "Serverfout",
-    regError:       "Registratiefout",
-  },
-};
-
-function getLang(hass) {
-  const raw = hass?.language || hass?.locale?.language || navigator.language || "en";
-  const code = raw.split("-")[0].toLowerCase();
-  return STRINGS[code] ? code : "en";
-}
-
 // ── Web component ─────────────────────────────────────────────────────────────
 
 class WebAuthnPanel extends HTMLElement {
@@ -150,11 +35,15 @@ class WebAuthnPanel extends HTMLElement {
 
   // ── Layout ────────────────────────────────────────────────────────────────
 
-  _mount() {
+  async _mount() {
     if (this._mounted) return;
     this._mounted = true;
 
-    const T = STRINGS[getLang(this._hass)];
+    const T = await this._loadStrings();
+    if (!T) {
+      this._renderFatal();
+      return;
+    }
 
     this.style.cssText = `
       display: grid;
@@ -210,6 +99,39 @@ class WebAuthnPanel extends HTMLElement {
 
     // Load credentials
     this._loadCredentials(content, T);
+  }
+
+  // ── Strings ───────────────────────────────────────────────────────────────
+
+  async _loadStrings() {
+    const raw =
+      this._hass?.language || this._hass?.locale?.language ||
+      navigator.language || "en";
+    const lang = raw.split("-")[0].toLowerCase();
+
+    try {
+      const res = await fetch(
+        `/api/webauthn_mfa/strings?section=panel&lang=${encodeURIComponent(lang)}`,
+        { headers: this._authHeaders(), credentials: "same-origin" }
+      );
+      if (res.ok) return await res.json();
+      console.error("[WebAuthn] strings request failed:", res.status);
+    } catch (e) {
+      console.error("[WebAuthn] loadStrings error:", e);
+    }
+    return null;
+  }
+
+  _renderFatal() {
+    this.style.cssText = "display:block;padding:24px";
+    this.textContent =
+      "Passkeys panel could not load its translations. Check the Home Assistant logs.";
+  }
+
+  _format(template, values) {
+    return String(template || "").replace(/\{(\w+)\}/g, (match, key) =>
+      key in values ? values[key] : match
+    );
   }
 
   // ── HTML template ─────────────────────────────────────────────────────────
@@ -378,7 +300,7 @@ class WebAuthnPanel extends HTMLElement {
   async _registerPasskey(root, T, name, btn) {
     btn.disabled = true;
     btn.textContent = T.registering;
-    this._setStatus(root, T.waiting, "info");
+    this._setStatus(root, this._format(T.registered_ok, { name }), "success");
 
     try {
       const chalRes = await fetch("/api/webauthn_mfa/register/challenge", {
