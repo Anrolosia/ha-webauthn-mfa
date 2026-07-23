@@ -1,0 +1,53 @@
+{
+  "title": "Uwierzytelnianie WebAuthn / kluczem dostępu",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Konfiguracja uwierzytelniania WebAuthn / kluczem dostępu",
+        "description": "Skonfiguruj uwierzytelnianie za pomocą klucza dostępu (WebAuthn / FIDO2) dla Home Assistanta.\n\nObie wartości muszą odpowiadać adresowi używanemu do uzyskiwania dostępu do Home Assistanta. W przeciwnym razie proces uwierzytelniania za pomocą klucza dostępu zakończy się niepowodzeniem w przeglądarce bez wyświetlenia przydatnego komunikatu o błędzie.",
+        "data": {
+          "rp_id": "Identyfikator strony uwierzytelniającej (RP)",
+          "rp_name": "Nazwa strony uwierzytelniającej (RP)",
+          "expected_origin": "Oczekiwane źródło (Origin)"
+        },
+        "data_description": {
+          "rp_id": "Nazwa domeny Twojej instancji Home Assistanta, bez protokołu ani numeru portu. Użyj `homeassistant.local` lub `ha.example.com`.",
+          "rp_name": "Czytelna dla użytkownika nazwa wyświetlana w oknach dialogowych klucza dostępu, np. `Home Assistant`.",
+          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta, zawierający protokół oraz numer portu, jeśli nie jest domyślny."
+        }
+      }
+    },
+    "error": {
+      "invalid_rp_id": "Identyfikator RP musi być nazwą domeny, bez protokołu ani numeru portu.",
+      "invalid_origin": "Oczekiwane źródło (Origin) musi zaczynać się od `https://` lub `http://` i zawierać nazwę hosta.",
+      "origin_mismatch": "Host w oczekiwanym źródle (Origin) musi być identyfikatorem RP lub jego subdomeną. WebAuthn odrzuci każdą inną kombinację."
+    },
+    "abort": {
+      "already_configured": "Uwierzytelnianie WebAuthn / kluczem dostępu jest już skonfigurowane.",
+      "invalid_yaml": "Blok `webauthn_mfa` w pliku `configuration.yaml` jest nieprawidłowy i nie mógł zostać zaimportowany. Popraw go lub usuń i skonfiguruj integrację z poziomu interfejsu użytkownika."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ustawienia WebAuthn / kluczy dostępu",
+        "description": "Zaktualizuj ustawienia domeny używane podczas operacji z kluczami dostępu.\n\nAby nowe wartości zaczęły obowiązywać, należy ponownie uruchomić Home Assistant.\n\nZmiana identyfikatora RP unieważnia wszystkie klucze dostępu zarejestrowane wcześniej w tej instancji. Są one kryptograficznie powiązane ze starą domeną i trzeba będzie zarejestrować je ponownie.",
+        "data": {
+          "rp_id": "Identyfikator strony ufającej (RP)",
+          "rp_name": "Nazwa strony ufającej (RP)",
+          "expected_origin": "Oczekiwane źródło (Origin)"
+        },
+        "data_description": {
+          "rp_id": "Nazwa domeny Twojej instancji Home Assistanta, bez protokołu ani numeru portu. Użyj `homeassistant.local` lub `ha.example.com`.",
+          "rp_name": "Czytelna dla użytkownika nazwa wyświetlana w oknach dialogowych klucza dostępu, np. `Home Assistant`.",
+          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta, zawierający protokół oraz numer portu, jeśli nie jest domyślny."
+        }
+      }
+    },
+    "error": {
+      "invalid_rp_id": "Identyfikator RP musi być zwykłą nazwą domeny bez protokołu ani numeru portu.",
+      "invalid_origin": "Oczekiwane źródło (Origin) musi zaczynać się od `https://` lub `http://` i zawierać nazwę hosta.",
+      "origin_mismatch": "Host w oczekiwanym źródle (Origin) musi być identyfikatorem RP lub jego subdomeną. WebAuthn odrzuca każdą inną kombinację."
+    }
+  }
+}
