@@ -1,39 +1,20 @@
-"""WebAuthn / Passkey Authentication — Home Assistant custom component.
+"""
+Configuration
+-------------
+The integration is set up from the Home Assistant UI, under Settings, Devices
+and services, Add integration, WebAuthn / Passkey Authentication. Three values
+are stored in the config entry:
 
-This integration injects a WebAuthn auth provider into HA at startup.
-Users can register FIDO2 passkeys (hardware keys, biometrics, password
-managers such as Bitwarden / 1Password) and use them instead of a password
-to sign in to Home Assistant.
+* ``rp_id``           — the domain name, without scheme or port.
+* ``rp_name``         — the label shown in passkey prompts.
+* ``expected_origin`` — the full URL used to reach Home Assistant.
 
-Architecture
-------------
-* ``provider.py``   — HA auth provider + login flow (token-based step).
-* ``store.py``      — Credential persistence via HA storage.
-* ``http_views.py`` — REST API for challenge/verify (auth) and
-                      challenge/verify (registration) + list/delete.
-* ``panel.py``      — Sidebar panel for passkey management.
-* ``www/``          — Static assets (HTML page, injected JS, panel JS).
+A legacy ``webauthn_mfa`` block in ``configuration.yaml`` is still read once at
+startup and imported into a config entry, then a deprecation warning is logged.
+The block can be removed afterwards.
 
-Login flow
-----------
-1. User visits ``/auth/authorize``.
-2. Our injected script adds a *Passkey / Security Key* option.
-3. Clicking it triggers ``WebAuthnLoginFlow`` → our ``authenticate.html``
-   page opens and calls ``navigator.credentials.get()``.
-4. ``WebAuthnVerifyView`` verifies the cryptographic assertion and stores
-   a short-lived token in ``hass.data``.
-5. The JS layer fills the HA form and submits it; ``async_step_init``
-   validates the token and completes the OAuth2 flow natively so that
-   the Service Worker persists the session tokens correctly.
-
-Configuration (``configuration.yaml``)
----------------------------------------
-.. code-block:: yaml
-
-    webauthn_mfa:
-      rp_id: "homeassistant.local"
-      rp_name: "Home Assistant"
-      expected_origin: "https://homeassistant.local"
+Settings are read when the config entry is set up, so a restart is required
+after changing them. Changing ``rp_id`` invalidates every registered passkey."
 """
 
 from __future__ import annotations
@@ -55,7 +36,9 @@ from homeassistant.components.auth.login_flow import LoginFlowIndexView
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.http.data_validator import RequestDataValidator
+from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.typing import ConfigType
 import homeassistant.helpers.config_validation as cv
 
 from . import panel as panel_module
@@ -157,12 +140,30 @@ class WebAuthnLoginFlowIndexView(LoginFlowIndexView):
 # ---------------------------------------------------------------------------
 
 
-async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
-    """Set up the WebAuthn / Passkey Authentication integration."""
-    cfg: dict[str, Any] = config[DOMAIN]
-    rp_id: str = cfg[CONF_RP_ID]
-    rp_name: str = cfg[CONF_RP_NAME]
-    expected_origin: str = cfg[CONF_EXPECTED_ORIGIN]
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Import the legacy configuration.yaml block into a config entry."""
+    conf = config.get(DOMAIN)
+    if conf is None:
+        return True
+
+    _LOGGER.warning(
+        "WebAuthn: YAML configuration is deprecated. The settings have been "
+        "imported into a config entry, you can now remove the webauthn_mfa "
+        "block from configuration.yaml"
+    )
+    hass.async_create_task(
+        hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": SOURCE_IMPORT}, data=conf
+        )
+    )
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up the WebAuthn / Passkey Authentication integration from a config entry."""
+    rp_id: str = entry.data[CONF_RP_ID]
+    rp_name: str = entry.data.get(CONF_RP_NAME, DEFAULT_RP_NAME)
+    expected_origin: str = entry.data[CONF_EXPECTED_ORIGIN]
 
     # 1. Persistent credential store.
     store = WebAuthnStore(hass)

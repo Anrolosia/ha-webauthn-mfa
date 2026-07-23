@@ -1,6 +1,6 @@
 # WebAuthn / Passkey Authentication for Home Assistant
 
-[![HACS Badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-blue.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://img.shields.io/github/release/Anrolosia/ha-webauthn-mfa.svg)](https://github.com/Anrolosia/ha-webauthn-mfa/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -25,7 +25,7 @@ This integration injects a WebAuthn auth provider into Home Assistant at startup
 
 ## Requirements
 
-- Home Assistant **2024.1** or later
+- Home Assistant **2024.4** or later
 - [HACS](https://hacs.xyz/) (recommended for installation)
 - HTTPS access to Home Assistant (`localhost` also works for development)
 - A WebAuthn-capable authenticator (hardware key, biometric sensor, or a supported password manager)
@@ -36,12 +36,13 @@ This integration injects a WebAuthn auth provider into Home Assistant at startup
 
 ### Via HACS (recommended)
 
+[![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Anrolosia&repository=ha-webauthn-mfa&category=integration)
+
 1. Open HACS in your Home Assistant UI.
-2. Go to **Integrations** → click the three-dot menu (⋮) → **Custom repositories**.
-3. Paste `https://github.com/Anrolosia/ha-webauthn-mfa`, choose category **Integration**, then click **Add**.
-4. Close the dialog. **WebAuthn / Passkey Authentication** will now appear in the integration list.
-5. Click **Download** and follow the prompts.
-6. Restart Home Assistant.
+2. Search for **WebAuthn / Passkey Authentication**.
+3. Click **Download** and follow the prompts.
+4. Restart Home Assistant.
+5. Go to **Settings** → **Devices & services** → **Add integration** and pick **WebAuthn / Passkey Authentication**.
 
 ### Manual
 
@@ -53,7 +54,22 @@ This integration injects a WebAuthn auth provider into Home Assistant at startup
 
 ## Configuration
 
-Add the following to your `configuration.yaml`:
+The integration is configured from the UI. Go to **Settings** → **Devices & services** → **Add integration** → **WebAuthn / Passkey Authentication**.
+
+| Field | Description |
+|-------|-------------|
+| `rp_id` | Your HA domain name, without scheme or port. `homeassistant.local` or `ha.example.com` |
+| `rp_name` | Label shown in passkey prompts, such as `Home Assistant` |
+| `expected_origin` | Full URL used to reach HA, including scheme and port if it is not the default |
+
+The host in `expected_origin` must be `rp_id` itself or a subdomain of it. The setup form rejects any other combination, because WebAuthn would otherwise fail silently in the browser.
+
+Settings can be changed later from the **Configure** button on the integration card. **A restart is required** for changes to take effect, and changing `rp_id` invalidates every passkey already registered.
+
+<details>
+<summary>Migrating from YAML</summary>
+
+Earlier versions were configured through `configuration.yaml`:
 
 ```yaml
 webauthn_mfa:
@@ -62,13 +78,9 @@ webauthn_mfa:
   expected_origin: "https://homeassistant.local"
 ```
 
-| Field | Description |
-|-------|-------------|
-| `rp_id` | Your HA domain name — no scheme, no port (e.g. `homeassistant.local` or `ha.example.com`) |
-| `rp_name` | Label shown in passkey prompts (e.g. `Home Assistant`) |
-| `expected_origin` | Full URL used to access HA, including scheme and port if non-standard |
+This block is still read once at startup and imported into a config entry automatically. A deprecation warning is logged, and the block can be removed from `configuration.yaml` afterwards. No passkeys are lost as long as `rp_id` stays the same.
 
-Restart Home Assistant after saving.
+</details>
 
 ---
 
@@ -142,9 +154,9 @@ make test
 
 | Symptom | Likely cause |
 |---------|-------------|
-| "Passkey / Security Key" option does not appear | The integration is not loaded — check `configuration.yaml` and the HA logs for errors on startup. |
+| "Passkey / Security Key" option does not appear | The integration is not set up, or it failed to load. Check **Settings** → **Devices & services** and the HA logs for errors on startup. |
 | Browser shows "Security key not supported" | Your browser or device does not support WebAuthn. Use Chrome, Firefox, Safari ≥ 16, or Edge. |
-| Passkey prompt appears but fails with "Not allowed" | The `expected_origin` in your config does not match the URL you are accessing HA from. |
+| Passkey prompt appears but fails with "Not allowed" | The `expected_origin` in your settings does not match the URL you are accessing HA from. |
 | Wrong user is signed in after passkey authentication | Re-register the passkey — a previous partial registration may have created an orphaned credential. |
 | Passkey works on one device but not another | Passkeys are tied to the authenticator. Use a sync-capable password manager (Bitwarden, 1Password) to share them across devices. |
 

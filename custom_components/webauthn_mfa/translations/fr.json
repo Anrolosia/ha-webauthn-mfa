@@ -4,25 +4,50 @@
     "step": {
       "user": {
         "title": "Configuration WebAuthn / Passkey",
-        "description": "Configurez l'authentification par passkey (WebAuthn / FIDO2) pour Home Assistant.\n\nL'**ID du domaine** doit correspondre à votre domaine (ex. `homeassistant.local`).\nL'**origine attendue** doit être l'URL complète utilisée pour accéder à HA.",
+        "description": "Configurez l'authentification par passkey (WebAuthn / FIDO2) pour Home Assistant.\n\nLes deux valeurs doivent correspondre à l'adresse utilisée pour joindre Home Assistant, sinon la cérémonie passkey échoue dans le navigateur sans message d'erreur utile.",
         "data": {
           "rp_id": "ID du domaine (Relying Party ID)",
           "rp_name": "Nom du service",
           "expected_origin": "Origine attendue"
         },
         "data_description": {
-          "rp_id": "Le nom de domaine de votre instance Home Assistant, sans le schéma ni le port (ex. `homeassistant.local`).",
-          "rp_name": "Un nom lisible affiché dans les invites de passkey (ex. `Home Assistant`).",
-          "expected_origin": "L'URL complète utilisée pour accéder à Home Assistant, avec le schéma et le port si nécessaire."
+          "rp_id": "Le nom de domaine de votre instance Home Assistant, sans le schéma ni le port. Utilisez `homeassistant.local` ou `ha.exemple.com`.",
+          "rp_name": "Un nom lisible affiché dans les invites de passkey, comme `Home Assistant`.",
+          "expected_origin": "L'URL complète utilisée pour joindre Home Assistant, avec le schéma et le port s'il n'est pas celui par défaut. Utilisez `https://ha.exemple.com` ou `https://ha.exemple.com:8123`."
         }
       }
     },
     "error": {
       "invalid_rp_id": "L'ID du domaine doit être un nom de domaine simple, sans schéma ni port.",
-      "invalid_origin": "L'origine attendue doit commencer par `https://` ou `http://`."
+      "invalid_origin": "L'origine attendue doit commencer par `https://` ou `http://` et contenir un nom d'hôte.",
+      "origin_mismatch": "L'hôte de l'origine attendue doit être l'ID du domaine lui-même, ou un de ses sous-domaines. WebAuthn refuse toute autre combinaison."
     },
     "abort": {
-      "already_configured": "L'authentification WebAuthn / Passkey est déjà configurée."
+      "already_configured": "L'authentification WebAuthn / Passkey est déjà configurée.",
+      "invalid_yaml": "Le bloc `webauthn_mfa` dans `configuration.yaml` est invalide et n'a pas pu être importé. Corrigez-le, ou retirez-le et configurez l'intégration depuis l'interface."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Paramètres WebAuthn / Passkey",
+        "description": "Modifiez les paramètres de domaine utilisés pour les cérémonies passkey.\n\nHome Assistant doit être redémarré pour que les nouvelles valeurs prennent effet.\n\nChanger l'ID du domaine invalide toutes les passkeys déjà enregistrées sur cette instance. Elles sont liées cryptographiquement à l'ancien domaine et devront être réenregistrées.",
+        "data": {
+          "rp_id": "ID du domaine (Relying Party ID)",
+          "rp_name": "Nom du service",
+          "expected_origin": "Origine attendue"
+        },
+        "data_description": {
+          "rp_id": "Le nom de domaine de votre instance Home Assistant, sans le schéma ni le port. Utilisez `homeassistant.local` ou `ha.exemple.com`.",
+          "rp_name": "Un nom lisible affiché dans les invites de passkey, comme `Home Assistant`.",
+          "expected_origin": "L'URL complète utilisée pour joindre Home Assistant, avec le schéma et le port s'il n'est pas celui par défaut. Utilisez `https://ha.exemple.com` ou `https://ha.exemple.com:8123`."
+        }
+      }
+    },
+    "error": {
+      "invalid_rp_id": "L'ID du domaine doit être un nom de domaine simple, sans schéma ni port.",
+      "invalid_origin": "L'origine attendue doit commencer par `https://` ou `http://` et contenir un nom d'hôte.",
+      "origin_mismatch": "L'hôte de l'origine attendue doit être l'ID du domaine lui-même, ou un de ses sous-domaines. WebAuthn refuse toute autre combinaison."
     }
   }
 }

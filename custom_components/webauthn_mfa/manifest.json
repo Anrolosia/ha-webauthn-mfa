@@ -4,6 +4,7 @@
   "codeowners": [
     "@anrolosia"
   ],
+  "config_flow": true,
   "dependencies": [
     "auth",
     "frontend",
