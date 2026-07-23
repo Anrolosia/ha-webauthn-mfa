@@ -18,6 +18,7 @@
 
 .DEFAULT_GOAL := help
 
+PYTHON    ?= python3
 MANIFEST  := custom_components/webauthn_mfa/manifest.json
 COMPONENT := custom_components/webauthn_mfa
 
@@ -34,13 +35,14 @@ help:
 	@echo "  make test           Run pytest"
 	@echo ""
 	@echo "  make version        Show current version"
-	@echo "  make bump-patch     x.y.Z+1  -- bug fix"
-	@echo "  make bump-minor     x.Y+1.0  -- new feature"
-	@echo "  make bump-major     X+1.0.0  -- breaking change"
 	@echo ""
-	@echo "  make release        lint -> bump-patch -> tag -> push"
-	@echo "  make release-minor  lint -> bump-minor -> tag -> push"
-	@echo "  make release-major  lint -> bump-major -> tag -> push"
+	@echo "  make release-dry    Preview the inferred bump and changelog"
+	@echo "  make release        Auto-bump from conventional commits + tag + push"
+	@echo "  make release BUMP=minor      Force a bump type"
+	@echo "  make release VERSION=1.2.0   Set an explicit version"
+	@echo "  make release-patch  Force patch bump"
+	@echo "  make release-minor  Force minor bump"
+	@echo "  make release-major  Force major bump"
 	@echo ""
 
 # ── Dependencies ─────────────────────────────────────────────
@@ -97,70 +99,22 @@ dev-init:
 version:
 	@python3 -c "import json; m=json.load(open('$(MANIFEST)')); print('Version: ' + m['version'])"
 
-.PHONY: bump-patch
-bump-patch:
-	@python3 -c "\
-import json; \
-m=json.load(open('$(MANIFEST)')); \
-p=list(map(int,m['version'].split('.'))); \
-p[2]+=1; \
-m['version']='.'.join(map(str,p)); \
-json.dump(m,open('$(MANIFEST)','w'),indent=2); \
-open('$(MANIFEST)','a').write('\n'); \
-print('Bumped to ' + m['version'])"
-
-.PHONY: bump-minor
-bump-minor:
-	@python3 -c "\
-import json; \
-m=json.load(open('$(MANIFEST)')); \
-p=list(map(int,m['version'].split('.'))); \
-p[1]+=1; p[2]=0; \
-m['version']='.'.join(map(str,p)); \
-json.dump(m,open('$(MANIFEST)','w'),indent=2); \
-open('$(MANIFEST)','a').write('\n'); \
-print('Bumped to ' + m['version'])"
-
-.PHONY: bump-major
-bump-major:
-	@python3 -c "\
-import json; \
-m=json.load(open('$(MANIFEST)')); \
-p=list(map(int,m['version'].split('.'))); \
-p[0]+=1; p[1]=0; p[2]=0; \
-m['version']='.'.join(map(str,p)); \
-json.dump(m,open('$(MANIFEST)','w'),indent=2); \
-open('$(MANIFEST)','a').write('\n'); \
-print('Bumped to ' + m['version'])"
 
 # ── Release ──────────────────────────────────────────────────
 
-.PHONY: release
-release: lint bump-patch
-	$(eval VER := $(shell python3 -c "import json; print(json.load(open('$(MANIFEST)'))['version'])"))
-	@echo "--- Releasing v$(VER)"
-	git add $(MANIFEST)
-	git commit -m "chore: release v$(VER)"
-	git tag -a "v$(VER)" -m "Release v$(VER)"
-	git push && git push --tags
-	@echo "Released v$(VER)"
+.PHONY: release release-dry release-patch release-minor release-major
 
-.PHONY: release-minor
-release-minor: lint bump-minor
-	$(eval VER := $(shell python3 -c "import json; print(json.load(open('$(MANIFEST)'))['version'])"))
-	@echo "--- Releasing v$(VER)"
-	git add $(MANIFEST)
-	git commit -m "chore: release v$(VER)"
-	git tag -a "v$(VER)" -m "Release v$(VER)"
-	git push && git push --tags
-	@echo "Released v$(VER)"
+release:
+	@$(PYTHON) scripts/release.py $(if $(VERSION),--version $(VERSION),) $(if $(BUMP),--bump $(BUMP),)
 
-.PHONY: release-major
-release-major: lint bump-major
-	$(eval VER := $(shell python3 -c "import json; print(json.load(open('$(MANIFEST)'))['version'])"))
-	@echo "--- Releasing v$(VER)"
-	git add $(MANIFEST)
-	git commit -m "chore: release v$(VER)"
-	git tag -a "v$(VER)" -m "Release v$(VER)"
-	git push && git push --tags
-	@echo "Released v$(VER)"
+release-dry:
+	@$(PYTHON) scripts/release.py --dry-run $(if $(VERSION),--version $(VERSION),) $(if $(BUMP),--bump $(BUMP),)
+
+release-patch:
+	@$(MAKE) release BUMP=patch
+
+release-minor:
+	@$(MAKE) release BUMP=minor
+
+release-major:
+	@$(MAKE) release BUMP=major

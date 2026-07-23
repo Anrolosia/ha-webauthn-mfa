@@ -57,7 +57,7 @@ jobs:
               echo ""
             fi
 
-            CHORES=$(git log $RANGE --pretty=format:"%s|%h" | grep -E "^(chore|ci|build|refactor|style|test)(\(.+\))?:" || true)
+            CHORES=$(git log $RANGE --pretty=format:"%s|%h" | grep -E "^(chore|ci|build|refactor|style|test)(\(.+\))?:" | grep -v "^chore: release v" || true)
             if [ -n "$CHORES" ]; then
               echo "<details>"
               echo "<summary>🔧 Maintenance</summary>"
