@@ -43,6 +43,7 @@
       "waiting": "⏳ Oczekiwanie na klucz dostępu...",
       "registered_ok": "✓ Zarejestrowano klucz dostępu \"{name}\"!",
       "cancelled": "❌ Anulowano.",
+      "alreadyRegistered": "❌ Ten uwierzytelniacz zawiera już klucz dostępu dla tego konta. Usuń go z powyższej listy lub użyj innego uwierzytelniacza.",
       "noSupport": "❌ Twoja przeglądarka nie obsługuje kluczy dostępu.",
       "serverError": "Błąd serwera",
       "regError": "Błąd rejestracji"

@@ -345,7 +345,17 @@ class WebAuthnPanel extends HTMLElement {
       root.querySelector("#passkey-name").value = "";
       await this._loadCredentials(root, T);
     } catch (err) {
-      this._setStatus(root, err.name === "NotAllowedError" ? T.cancelled : `❌ ${err.message}`, "error");
+      let message;
+      if (err.name === "NotAllowedError") {
+        message = T.cancelled;
+      } else if (err.name === "InvalidStateError") {
+        // The authenticator already holds one of the excluded credentials,
+        // typically a passkey synced from another device of the same account.
+        message = T.alreadyRegistered;
+      } else {
+       message = `❌ ${err.message}`;
+      }
+      this._setStatus(root, message, "error");
     } finally {
       btn.disabled = false;
       btn.textContent = T.addBtn;

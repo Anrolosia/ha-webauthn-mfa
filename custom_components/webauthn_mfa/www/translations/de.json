@@ -43,6 +43,7 @@
       "waiting": "⏳ Warten auf Ihren Passkey...",
       "registered_ok": "✓ Passkey „{name}\" registriert!",
       "cancelled": "❌ Abgebrochen.",
+      "alreadyRegistered": "❌ Dieser Authentifikator enthält bereits einen Passkey für dieses Konto. Löschen Sie ihn aus der Liste oben oder verwenden Sie einen anderen Authentifikator.",
       "noSupport": "❌ Ihr Browser unterstützt keine Passkeys.",
       "serverError": "Serverfehler",
       "regError": "Registrierungsfehler"

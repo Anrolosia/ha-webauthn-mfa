@@ -160,6 +160,8 @@ make test
 | Passkey prompt appears but fails with "Not allowed" | The `expected_origin` in your settings does not match the URL you are accessing HA from. |
 | Wrong user is signed in after passkey authentication | Re-register the passkey — a previous partial registration may have created an orphaned credential. |
 | Passkey works on one device but not another | Passkeys are tied to the authenticator. Use a sync-capable password manager (Bitwarden, 1Password) to share them across devices. |
+| Registration fails with "The object is in an invalid state" | This authenticator already holds a passkey for your account, usually one synced from another device through iCloud Keychain or a password manager. Delete the existing passkey from the Passkeys panel first, or register from a different authenticator. |
+| Registration is immediately cancelled inside the Home Assistant Companion App | The Companion App webview does not expose WebAuthn. Register and sign in from a regular browser instead. |
 
 ### Enabling debug logs
 
