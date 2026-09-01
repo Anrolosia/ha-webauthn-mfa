@@ -300,7 +300,7 @@ class WebAuthnPanel extends HTMLElement {
   async _registerPasskey(root, T, name, btn) {
     btn.disabled = true;
     btn.textContent = T.registering;
-    this._setStatus(root, this._format(T.registered_ok, { name }), "success");
+    this._setStatus(root, T.waiting, "info");
 
     try {
       const chalRes = await fetch("/api/webauthn_mfa/register/challenge", {
@@ -341,7 +341,7 @@ class WebAuthnPanel extends HTMLElement {
       });
       if (!regRes.ok) throw new Error((await regRes.json()).message || T.regError);
 
-      this._setStatus(root, T.registered_ok(name), "success");
+      this._setStatus(root, this._format(T.registered_ok, { name }), "success");
       root.querySelector("#passkey-name").value = "";
       await this._loadCredentials(root, T);
     } catch (err) {

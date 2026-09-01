@@ -307,7 +307,7 @@ async def _inject_login_script(hass: HomeAssistant, www_path: str) -> None:
                         return AiohttpResponse(
                             text=html, content_type="text/html", headers=headers
                         )
-                except Exception:  # noqa: BLE001
+                except Exception:
                     _LOGGER.warning(
                         "WebAuthn: failed to inject script into /auth/authorize",
                         exc_info=True,
