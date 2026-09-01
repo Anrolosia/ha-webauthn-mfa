@@ -353,7 +353,7 @@ class WebAuthnPanel extends HTMLElement {
         // typically a passkey synced from another device of the same account.
         message = T.alreadyRegistered;
       } else {
-       message = `❌ ${err.message}`;
+        message = `❌ ${err.message}`;
       }
       this._setStatus(root, message, "error");
     } finally {

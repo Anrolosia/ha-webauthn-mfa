@@ -27,26 +27,23 @@ def _load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _flatten(data: Any, prefix: str = "") -> set[str]:
-    """Return every leaf path in a nested mapping, dot separated."""
+def _leaves(data: Any, prefix: str = "") -> dict[str, Any]:
+    """Return every leaf of a nested mapping, keyed by its dotted path."""
     if not isinstance(data, dict):
-        return {prefix}
-    keys: set[str] = set()
+        return {prefix: data}
+    leaves: dict[str, Any] = {}
     for key, value in data.items():
-        keys |= _flatten(value, f"{prefix}.{key}" if prefix else key)
-    return keys
+        leaves |= _leaves(value, f"{prefix}.{key}" if prefix else key)
+    return leaves
 
 
 def _placeholders(data: Any) -> dict[str, set[str]]:
     """Return the placeholder names used by every leaf string."""
-    result: dict[str, set[str]] = {}
-    for path in _flatten(data):
-        node: Any = data
-        for part in path.split("."):
-            node = node[part]
-        if isinstance(node, str):
-            result[path] = set(PLACEHOLDER.findall(node))
-    return result
+    return {
+        path: set(PLACEHOLDER.findall(value))
+        for path, value in _leaves(data).items()
+        if isinstance(value, str)
+    }
 
 
 def _frontend_files() -> list[Path]:
@@ -76,8 +73,8 @@ def test_frontend_files_share_the_top_level_key() -> None:
 @pytest.mark.parametrize("path", _frontend_files(), ids=lambda p: p.name)
 def test_frontend_files_have_the_same_keys_as_english(path: Path) -> None:
     """A missing key renders as undefined in the panel or the login page."""
-    reference = _flatten(_load(FRONTEND_TRANSLATIONS / "en.json")["webauthn_mfa"])
-    actual = _flatten(_load(path)["webauthn_mfa"])
+    reference = set(_leaves(_load(FRONTEND_TRANSLATIONS / "en.json")["webauthn_mfa"]))
+    actual = set(_leaves(_load(path)["webauthn_mfa"]))
 
     assert actual == reference, (
         f"{path.name} differs from en.json, "
@@ -122,8 +119,8 @@ def test_already_registered_is_present_everywhere() -> None:
 @pytest.mark.parametrize("path", _backend_files(), ids=lambda p: p.name)
 def test_backend_files_have_the_same_keys_as_strings_json(path: Path) -> None:
     """hassfest compares the config flow translations against strings.json."""
-    reference = _flatten(_load(STRINGS))
-    actual = _flatten(_load(path))
+    reference = set(_leaves(_load(STRINGS)))
+    actual = set(_leaves(_load(path)))
 
     assert actual == reference, (
         f"{path.name} differs from strings.json, "
@@ -134,10 +131,7 @@ def test_backend_files_have_the_same_keys_as_strings_json(path: Path) -> None:
 @pytest.mark.parametrize("path", _backend_files(), ids=lambda p: p.name)
 def test_backend_data_descriptions_hold_no_url(path: Path) -> None:
     """The hassfest translations validator rejects URLs in data_description."""
-    for key in _flatten(_load(path)):
+    for key, value in _leaves(_load(path)).items():
         if "data_description" not in key:
             continue
-        node: Any = _load(path)
-        for part in key.split("."):
-            node = node[part]
-        assert "://" not in node, f"{path.name} has a URL in {key}"
+        assert "://" not in value, f"{path.name} has a URL in {key}"
