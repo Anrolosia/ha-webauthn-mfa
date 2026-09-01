@@ -23,6 +23,7 @@ from .const import (
     DEFAULT_RP_NAME,
     DOMAIN,
 )
+from .origins import normalize_origin
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     return {
         CONF_RP_ID: user_input[CONF_RP_ID].strip().lower(),
         CONF_RP_NAME: user_input[CONF_RP_NAME].strip(),
-        CONF_EXPECTED_ORIGIN: user_input[CONF_EXPECTED_ORIGIN].strip().rstrip("/"),
+        CONF_EXPECTED_ORIGIN: normalize_origin(user_input[CONF_EXPECTED_ORIGIN]),
     }
 
 
@@ -57,7 +58,7 @@ def _validate(user_input: dict[str, Any]) -> dict[str, str]:
     errors: dict[str, str] = {}
 
     rp_id = user_input[CONF_RP_ID].strip().lower()
-    origin = user_input[CONF_EXPECTED_ORIGIN].strip().rstrip("/")
+    origin = normalize_origin(user_input[CONF_EXPECTED_ORIGIN])
 
     if not rp_id or "://" in rp_id or "/" in rp_id or ":" in rp_id:
         errors[CONF_RP_ID] = "invalid_rp_id"

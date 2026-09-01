@@ -167,7 +167,7 @@ class WebAuthnVerifyView(HomeAssistantView):
         hass: HomeAssistant,
         store: WebAuthnStore,
         rp_id: str,
-        expected_origin: str,
+        expected_origin: list[str],
     ) -> None:
         """Initialise view."""
         self._hass = hass
@@ -335,7 +335,7 @@ class WebAuthnRegisterVerifyView(HomeAssistantView):
         hass: HomeAssistant,
         store: WebAuthnStore,
         rp_id: str,
-        expected_origin: str,
+        expected_origin: list[str],
     ) -> None:
         """Initialise view."""
         self._hass = hass
