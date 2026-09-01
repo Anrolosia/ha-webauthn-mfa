@@ -140,6 +140,10 @@
     return new Promise((r) => setTimeout(r, ms));
   }
 
+  // Sentinel returned by the provider-selection wait when Home Assistant went
+  // straight to the token form (no provider picker to click).
+  const FORM_READY = Symbol("webauthn-form-ready");
+
   // ── Case 1: pending token → replay the native form (behind overlay) ───
   const pendingRaw = sessionStorage.getItem("webauthn_pending_token");
   if (pendingRaw) {
@@ -261,16 +265,22 @@
     };
 
     try {
-      // 1. Select the "Passkey / Security Key" provider.
-      const passkeyBtn = await _waitFor(() => _findPasskeyButton(), 10000);
-      passkeyBtn.click();
+      // 1. Select the "Passkey / Security Key" provider. When WebAuthn is the
+      //    only auth provider configured, HA skips the picker entirely and
+      //    renders the token form right away, so there is no button to click.
+      //    Wait for whichever of the two shows up first.
+      const providerStep = await _waitFor(
+        () => _findPasskeyButton() || (_findTokenInput() ? FORM_READY : null),
+        10000
+      );
+      if (providerStep !== FORM_READY) {
+        providerStep.click();
+      }
 
       // 2. Wait for the token input + submit button to render. Both can sit
       //    inside nested shadow DOM, so use a deep search (see _deepFind).
       const submitBtn = await _waitFor(() => {
-        const input = _deepFind(
-          (el) => el.tagName === "INPUT" && el.name === "webauthn_token"
-        );
+        const input = _findTokenInput();
         const btn = _deepFind(
           (el) =>
             (el.tagName === "HA-BUTTON" ||
@@ -315,13 +325,17 @@
     return null;
   }
 
+  function _findTokenInput() {
+    return _deepFind(
+      (el) => el.tagName === "INPUT" && el.name === "webauthn_token"
+    );
+  }
+
   function _fillTokenField(token) {
     // The real <input> lives inside ha-auth-form-string's shadow DOM
     // (note `part="input"`), so a flat selector cannot reach it.
     const input =
-      _deepFind(
-        (el) => el.tagName === "INPUT" && el.name === "webauthn_token"
-      ) ||
+      _findTokenInput() ||
       _deepFind(
         (el) =>
           el.tagName === "INPUT" &&
