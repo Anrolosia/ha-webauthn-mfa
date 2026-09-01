@@ -300,7 +300,7 @@ class WebAuthnPanel extends HTMLElement {
   async _registerPasskey(root, T, name, btn) {
     btn.disabled = true;
     btn.textContent = T.registering;
-    this._setStatus(root, this._format(T.registered_ok, { name }), "success");
+    this._setStatus(root, T.waiting, "info");
 
     try {
       const chalRes = await fetch("/api/webauthn_mfa/register/challenge", {
@@ -341,11 +341,21 @@ class WebAuthnPanel extends HTMLElement {
       });
       if (!regRes.ok) throw new Error((await regRes.json()).message || T.regError);
 
-      this._setStatus(root, T.registered_ok(name), "success");
+      this._setStatus(root, this._format(T.registered_ok, { name }), "success");
       root.querySelector("#passkey-name").value = "";
       await this._loadCredentials(root, T);
     } catch (err) {
-      this._setStatus(root, err.name === "NotAllowedError" ? T.cancelled : `❌ ${err.message}`, "error");
+      let message;
+      if (err.name === "NotAllowedError") {
+        message = T.cancelled;
+      } else if (err.name === "InvalidStateError") {
+        // The authenticator already holds one of the excluded credentials,
+        // typically a passkey synced from another device of the same account.
+        message = T.alreadyRegistered;
+      } else {
+        message = `❌ ${err.message}`;
+      }
+      this._setStatus(root, message, "error");
     } finally {
       btn.disabled = false;
       btn.textContent = T.addBtn;

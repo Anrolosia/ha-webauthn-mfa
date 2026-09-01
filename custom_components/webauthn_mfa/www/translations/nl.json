@@ -43,6 +43,7 @@
       "waiting": "⏳ Wachten op uw passkey...",
       "registered_ok": "✓ Passkey \"{name}\" geregistreerd!",
       "cancelled": "❌ Geannuleerd.",
+      "alreadyRegistered": "❌ Deze authenticator bevat al een passkey voor dit account. Verwijder deze uit de lijst hierboven of gebruik een andere authenticator.",
       "noSupport": "❌ Uw browser ondersteunt geen passkeys.",
       "serverError": "Serverfout",
       "regError": "Registratiefout"

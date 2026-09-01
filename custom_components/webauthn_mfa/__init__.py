@@ -63,6 +63,7 @@ from .http_views import (
     WebAuthnStringsView,
     WebAuthnVerifyView,
 )
+from .origins import expected_origins
 from .provider import WebAuthnAuthProvider
 from .store import WebAuthnStore
 
@@ -168,7 +169,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the WebAuthn / Passkey Authentication integration from a config entry."""
     rp_id: str = entry.data[CONF_RP_ID]
     rp_name: str = entry.data.get(CONF_RP_NAME, DEFAULT_RP_NAME)
-    expected_origin: str = entry.data[CONF_EXPECTED_ORIGIN]
+    # Accept the origin with and without its default port, since the browser
+    # decides which spelling it sends. Entries stored before this change are
+    # normalised here, so no migration is needed.
+    origins: list[str] = expected_origins(entry.data[CONF_EXPECTED_ORIGIN])
+    _LOGGER.debug("WebAuthn: accepted origins %s", origins)
 
     # 1. Persistent credential store.
     store = WebAuthnStore(hass)
@@ -194,11 +199,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # 4. Register HTTP API views.
     hass.http.register_view(WebAuthnAuthenticateView(rp_id))
     hass.http.register_view(WebAuthnChallengeView(store, rp_id))
-    hass.http.register_view(WebAuthnVerifyView(hass, store, rp_id, expected_origin))
+    hass.http.register_view(WebAuthnVerifyView(hass, store, rp_id, origins))
     hass.http.register_view(WebAuthnRegisterChallengeView(store, rp_id, rp_name))
-    hass.http.register_view(
-        WebAuthnRegisterVerifyView(hass, store, rp_id, expected_origin)
-    )
+    hass.http.register_view(WebAuthnRegisterVerifyView(hass, store, rp_id, origins))
     hass.http.register_view(WebAuthnListView(store))
     hass.http.register_view(WebAuthnDeleteView(store))
     hass.http.register_view(WebAuthnStringsView())
@@ -307,7 +310,7 @@ async def _inject_login_script(hass: HomeAssistant, www_path: str) -> None:
                         return AiohttpResponse(
                             text=html, content_type="text/html", headers=headers
                         )
-                except Exception:  # noqa: BLE001
+                except Exception:
                     _LOGGER.warning(
                         "WebAuthn: failed to inject script into /auth/authorize",
                         exc_info=True,

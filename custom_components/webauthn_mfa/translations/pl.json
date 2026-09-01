@@ -13,7 +13,7 @@
         "data_description": {
           "rp_id": "Nazwa domeny Twojej instancji Home Assistanta, bez protokołu ani numeru portu. Użyj `homeassistant.local` lub `ha.example.com`.",
           "rp_name": "Czytelna dla użytkownika nazwa wyświetlana w oknach dialogowych klucza dostępu, np. `Home Assistant`.",
-          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta, zawierający protokół oraz numer portu, jeśli nie jest domyślny."
+          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta, zawierający protokół. Numer portu można pominąć, jeśli jest domyślny dla danego protokołu, obie formy są akceptowane."
         }
       }
     },
@@ -40,7 +40,7 @@
         "data_description": {
           "rp_id": "Nazwa domeny Twojej instancji Home Assistanta, bez protokołu ani numeru portu. Użyj `homeassistant.local` lub `ha.example.com`.",
           "rp_name": "Czytelna dla użytkownika nazwa wyświetlana w oknach dialogowych klucza dostępu, np. `Home Assistant`.",
-          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta, zawierający protokół oraz numer portu, jeśli nie jest domyślny."
+          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta, zawierający protokół. Numer portu można pominąć, jeśli jest domyślny dla danego protokołu, obie formy są akceptowane."
         }
       }
     },

@@ -64,7 +64,7 @@ def _read(language: str) -> dict[str, Any]:
         return {}
     try:
         return load_json_object(path).get(DOMAIN, {})
-    except Exception:  # noqa: BLE001
+    except Exception:
         _LOGGER.warning(
             "WebAuthn: could not read the %s frontend translations",
             language,

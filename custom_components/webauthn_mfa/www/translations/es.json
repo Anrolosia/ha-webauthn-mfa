@@ -43,6 +43,7 @@
       "waiting": "⏳ Esperando tu passkey...",
       "registered_ok": "✓ Passkey \"{name}\" registrada!",
       "cancelled": "❌ Cancelado.",
+      "alreadyRegistered": "❌ Este autenticador ya contiene una passkey para esta cuenta. Elimínala de la lista de arriba o usa otro autenticador.",
       "noSupport": "❌ Tu navegador no admite passkeys.",
       "serverError": "Error del servidor",
       "regError": "Error de registro"
