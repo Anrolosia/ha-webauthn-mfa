@@ -108,10 +108,25 @@
         : T.btnAuth;
     }
 
+    function getSafeReturnUrl(fallback = "/") {
+      const urlValue = RETURN_URL || new URLSearchParams(window.location.search).get("return_url") || "";
+      if (!urlValue) {
+        return fallback;
+      }
+      try {
+        const parsed = new URL(urlValue, window.location.origin);
+        if (parsed.origin !== window.location.origin) {
+          return fallback;
+        }
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      } catch (_) {
+        return fallback;
+      }
+    }
+
     function goBack() {
       sessionStorage.setItem("webauthn_bypass", "1");
-      const params = new URLSearchParams(window.location.search);
-      window.location.href = params.get("return_url") || "/";
+      window.location.href = getSafeReturnUrl("/");
     }
 
     function bufferToBase64url(buffer) {
@@ -210,7 +225,7 @@
           }));
 
           setTimeout(() => {
-            window.location.href = RETURN_URL || "/auth/authorize";
+            window.location.href = getSafeReturnUrl("/auth/authorize");
           }, 300);
         } else {
           setStatus(`${T.failed}: ${verifyData.error || T.unknown}`, "error");
