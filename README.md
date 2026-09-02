@@ -25,7 +25,7 @@ This integration injects a WebAuthn auth provider into Home Assistant at startup
 
 ## Requirements
 
-- Home Assistant **2024.4** or later
+- Home Assistant **2026.4** or later
 - [HACS](https://hacs.xyz/) (recommended for installation)
 - HTTPS access to Home Assistant (`localhost` also works for development)
 - A WebAuthn-capable authenticator (hardware key, biometric sensor, or a supported password manager)
