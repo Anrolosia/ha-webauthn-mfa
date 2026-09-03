@@ -144,10 +144,47 @@ Home Assistant will be available at `https://ha.test`. Since Caddy uses an inter
 
 ### Running tests
 
+The test suite pins `pytest-homeassistant-custom-component`, which tracks Home Assistant and therefore needs **Python 3.14 or newer**. On an older interpreter, `pip` filters the newer releases out of the index and fails with a misleading `no matching distribution found` error listing hundreds of older versions.
+
+The simplest option needs no local Python at all, since it builds in Docker:
+
 ```bash
+make test
+```
+
+To install the dependencies locally instead, create a virtual environment first:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 make install
 make test
 ```
+
+If `python3` is not your 3.14 interpreter, point `make` at the right one:
+
+```bash
+make install PYTHON=/path/to/python3.14
+```
+
+`make install` checks the interpreter version before touching `pip` and tells you which one it found, so a wrong version fails immediately with a readable message rather than a wall of package versions.
+
+<details>
+<summary>Windows (Git Bash)</summary>
+
+The `py` launcher is not on the `PATH` inside Git Bash, so use the full path the installer created. After `winget install Python.Python.3.14`:
+
+```bash
+"/c/Users/$USERNAME/AppData/Local/Programs/Python/Python314/python.exe" -m venv .venv
+source .venv/Scripts/activate
+make install
+```
+
+Note that the activate script lives under `Scripts/` rather than `bin/`. Without activating the virtual environment, `make` falls back to whichever `python3` is on the `PATH`, which is usually the Microsoft Store build.
+
+</details>
+
+`make lint` and `make format` only need `ruff` and run on any Python version.
 
 ---
 
@@ -162,6 +199,7 @@ make test
 | Passkey works on one device but not another | Passkeys are tied to the authenticator. Use a sync-capable password manager (Bitwarden, 1Password) to share them across devices. |
 | Registration fails with "The object is in an invalid state" | This authenticator already holds a passkey for your account, usually one synced from another device through iCloud Keychain or a password manager. Delete the existing passkey from the Passkeys panel first, or register from a different authenticator. |
 | Registration is immediately cancelled inside the Home Assistant Companion App | The Companion App webview does not expose WebAuthn. Register and sign in from a regular browser instead. |
+| `make install` fails with `no matching distribution found` for `pytest-homeassistant-custom-component` | Your local Python is older than 3.14. See [Running tests](#running-tests). |
 
 ### Enabling debug logs
 

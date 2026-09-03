@@ -4,21 +4,34 @@
 #
 #  Commands:
 #    make help          Show this help
-#    make install       Install all dev dependencies
+#    make install       Install all dev dependencies (needs Python 3.14+)
 #    make lint          Run ruff checks
 #    make format        Auto-format Python sources
-#    make test          Run pytest
+#    make test          Run pytest in Docker (no local Python needed)
 #    make version       Show current version
-#    make bump-patch    1.0.0 -> 1.0.1  (bug fix)
-#    make bump-minor    1.0.0 -> 1.1.0  (new feature)
-#    make bump-major    1.0.0 -> 2.0.0  (breaking change)
-#    make release       lint + bump-patch + tag + push
-#    make release-minor lint + bump-minor + tag + push
-#    make release-major lint + bump-major + tag + push
+#    make release-dry   Preview the inferred bump and changelog
+#    make release       Auto-bump from conventional commits + tag + push
+#
+#  An activated virtual environment is picked up automatically.
+#  Otherwise, override the interpreter explicitly:
+#    make install PYTHON=/path/to/python3.14
 
 .DEFAULT_GOAL := help
 
-PYTHON    ?= python3
+# Prefer the interpreter of an activated virtualenv. A Windows venv creates
+# Scripts/python.exe and no python3 at all, so a bare "python3" would silently
+# fall through to whatever is on PATH (usually the Microsoft Store build) even
+# with the venv active. A variable passed on the command line still wins.
+ifdef VIRTUAL_ENV
+  ifneq ($(wildcard $(VIRTUAL_ENV)/bin/python),)
+    PYTHON ?= $(VIRTUAL_ENV)/bin/python
+  else
+    PYTHON ?= $(VIRTUAL_ENV)/Scripts/python.exe
+  endif
+else
+  PYTHON ?= python3
+endif
+
 MANIFEST  := custom_components/webauthn_mfa/manifest.json
 COMPONENT := custom_components/webauthn_mfa
 
@@ -29,10 +42,10 @@ help:
 	@echo ""
 	@echo "  ha-webauthn-mfa -- Developer Commands"
 	@echo ""
-	@echo "  make install        Install Python dev dependencies"
+	@echo "  make install        Install Python dev dependencies (Python 3.14+)"
 	@echo "  make lint           Check Python (ruff)"
 	@echo "  make format         Auto-format Python sources"
-	@echo "  make test           Run pytest"
+	@echo "  make test           Run pytest (docker)"
 	@echo ""
 	@echo "  make version        Show current version"
 	@echo ""
@@ -44,14 +57,33 @@ help:
 	@echo "  make release-minor  Force minor bump"
 	@echo "  make release-major  Force major bump"
 	@echo ""
+	@echo "  Interpreter in use: $(PYTHON)"
+	@echo ""
 
 # ── Dependencies ─────────────────────────────────────────────
 
+# pytest-homeassistant-custom-component tracks Home Assistant, which requires
+# Python 3.14+. On an older interpreter pip filters the newer releases out of
+# the index and fails with a misleading "no matching distribution" error, so
+# check the version up front and say what is actually wrong.
+.PHONY: check-python
+check-python:
+	@command -v "$(PYTHON)" >/dev/null 2>&1 || { \
+		echo ""; \
+		echo "Interpreter '$(PYTHON)' was not found."; \
+		echo "Activate a virtualenv, or point make at one:"; \
+		echo "  make install PYTHON=/path/to/python3.14"; \
+		echo "Or skip the local install:  make test"; \
+		echo ""; \
+		exit 1; \
+	}
+	@"$(PYTHON)" -c "import sys; sys.exit(0) if sys.version_info[:2] >= (3, 14) else sys.exit('\nPython 3.14 or newer is required by the test stack.\nFound ' + sys.version.split()[0] + ' at ' + sys.executable + '.\n\nIf a virtualenv is active, make did not pick it up. Otherwise:\n  make install PYTHON=/path/to/python3.14\nOr skip the local install entirely:\n  make test   (builds in Docker)\n')"
+
 .PHONY: install
-install:
-	@echo "--- Installing Python dependencies"
-	pip install -r requirements_test.txt
-	pip install ruff
+install: check-python
+	@echo "--- Installing Python dependencies with $(PYTHON)"
+	"$(PYTHON)" -m pip install -r requirements_test.txt
+	"$(PYTHON)" -m pip install ruff
 	@echo "Done."
 
 # ── Lint ─────────────────────────────────────────────────────
@@ -97,7 +129,7 @@ dev-init:
 
 .PHONY: version
 version:
-	@python3 -c "import json; m=json.load(open('$(MANIFEST)')); print('Version: ' + m['version'])"
+	@"$(PYTHON)" -c "import json; m=json.load(open('$(MANIFEST)')); print('Version: ' + m['version'])"
 
 
 # ── Release ──────────────────────────────────────────────────
@@ -105,10 +137,10 @@ version:
 .PHONY: release release-dry release-patch release-minor release-major
 
 release:
-	@$(PYTHON) scripts/release.py $(if $(VERSION),--version $(VERSION),) $(if $(BUMP),--bump $(BUMP),)
+	@"$(PYTHON)" scripts/release.py $(if $(VERSION),--version $(VERSION),) $(if $(BUMP),--bump $(BUMP),)
 
 release-dry:
-	@$(PYTHON) scripts/release.py --dry-run $(if $(VERSION),--version $(VERSION),) $(if $(BUMP),--bump $(BUMP),)
+	@"$(PYTHON)" scripts/release.py --dry-run $(if $(VERSION),--version $(VERSION),) $(if $(BUMP),--bump $(BUMP),)
 
 release-patch:
 	@$(MAKE) release BUMP=patch
