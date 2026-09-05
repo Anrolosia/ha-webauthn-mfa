@@ -33,7 +33,7 @@ services:
     volumes:
       - .:/app
     command: >
-      bash -c "pip install -r requirements_test.txt ruff --quiet &&
+      bash -c "pip install -r requirements_test.txt -r requirements_lint.txt --quiet &&
                pytest tests/ -v --tb=short"
     profiles:
       - test
