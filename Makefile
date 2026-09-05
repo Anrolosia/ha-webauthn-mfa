@@ -82,8 +82,7 @@ check-python:
 .PHONY: install
 install: check-python
 	@echo "--- Installing Python dependencies with $(PYTHON)"
-	"$(PYTHON)" -m pip install -r requirements_test.txt
-	"$(PYTHON)" -m pip install ruff
+	"$(PYTHON)" -m pip install -r requirements_test.txt -r requirements_lint.txt
 	@echo "Done."
 
 # ── Lint ─────────────────────────────────────────────────────

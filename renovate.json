@@ -1,0 +1,24 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "pinDigests": true,
+  "packageRules": [
+    {
+      "description": "Keep workflow action bumps together in a single PR.",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Keep the requirements pinned in the Home Assistant integration manifest up to date.",
+      "managerFilePatterns": ["/^custom_components/[^/]+/manifest\\.json$/"],
+      "matchStrings": ["\"(?<depName>[A-Za-z0-9._-]+)==(?<currentValue>[^\"]+)\""],
+      "datasourceTemplate": "pypi"
+    }
+  ]
+}
