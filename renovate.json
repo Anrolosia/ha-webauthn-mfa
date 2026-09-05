@@ -4,6 +4,7 @@
     "config:recommended",
     "helpers:pinGitHubActionDigests"
   ],
+  "dependencyDashboard": true,
   "packageRules": [
     {
       "description": "Keep workflow action bumps together in a single PR.",
@@ -15,6 +16,16 @@
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["home-assistant/actions", "hacs/action"],
       "pinDigests": false
+    },
+    {
+      "description": "Keep the test and lint dependency bumps together in a single PR.",
+      "matchManagers": ["pip_requirements"],
+      "groupName": "python test dependencies"
+    },
+    {
+      "description": "Keep the dev container image bumps together in a single PR.",
+      "matchManagers": ["docker-compose"],
+      "groupName": "dev container images"
     }
   ],
   "customManagers": [
