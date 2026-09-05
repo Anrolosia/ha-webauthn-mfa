@@ -1,15 +1,19 @@
-name: Tests
+name: Dependency config syntax
 
 on:
   push:
+    paths:
+      - "renovate.json"
   pull_request:
+    paths:
+      - "renovate.json"
 
 permissions:
   contents: read
 
 jobs:
-  pytest:
-    name: pytest
+  validate:
+    name: Validate the Renovate config
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -21,8 +25,8 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Install dependencies
-        run: pip install -r requirements_test.txt
+      - name: Install check-jsonschema
+        run: pip install check-jsonschema
 
-      - name: Run pytest
-        run: pytest tests/ -v --tb=short
+      - name: Validate renovate.json
+        run: check-jsonschema --builtin-schema vendor.renovate --regex-variant nonunicode renovate.json

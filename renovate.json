@@ -1,0 +1,36 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "pinDigests": true,
+  "dependencyDashboard": true,
+  "packageRules": [
+    {
+      "description": "Keep workflow action bumps together in a single PR.",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "description": "Keep the test/lint dependency bumps together in a single PR.",
+      "matchManagers": ["pip_requirements"],
+      "groupName": "python test dependencies"
+    },
+    {
+      "description": "Keep the dev container image bumps together in a single PR, and leave the tags floating instead of pinning them by digest.",
+      "matchManagers": ["docker-compose"],
+      "groupName": "dev container images",
+      "pinDigests": false
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Keep the requirements pinned in the Home Assistant integration manifest up to date.",
+      "managerFilePatterns": ["/^custom_components/[^/]+/manifest\\.json$/"],
+      "matchStrings": ["\"(?<depName>[A-Za-z0-9._-]+)==(?<currentValue>[^\"]+)\""],
+      "datasourceTemplate": "pypi"
+    }
+  ]
+}
