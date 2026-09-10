@@ -21,6 +21,91 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # ── Detect first-time contributors ────────────────────────────────
+      # Writes /tmp/new_contributors.md, empty when there are none. The
+      # section is cosmetic, so every failure path here exits 0 and lets the
+      # release go out without it.
+      # sha=PREV_TAG is a starting point, not a range: the API walks the
+      # full ancestry, so this asks "has this person ever contributed
+      # before this release" across the entire project history.
+      - name: Detect first-time contributors
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          PREV_TAG=$(git tag --sort=-version:refname | sed -n '2p')
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          : > /tmp/new_contributors.md
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "Initial release: skipping the new contributors section."
+            exit 0
+          fi
+
+          if ! gh api "repos/${REPO}/compare/${PREV_TAG}...${CURRENT_TAG}" \
+               > /tmp/compare.json 2>/tmp/compare.err; then
+            echo "::warning::Could not compare ${PREV_TAG}...${CURRENT_TAG}, skipping the new contributors section."
+            cat /tmp/compare.err || true
+            exit 0
+          fi
+
+          if ! jq -e '.commits' /tmp/compare.json >/dev/null 2>&1; then
+            echo "::warning::Unexpected compare payload, skipping the new contributors section."
+            exit 0
+          fi
+
+          # Every login that authored a commit in the range. This walks the
+          # merged branch commits too, which matters: a merge commit is
+          # authored by whoever pressed merge, so looking only at the tip
+          # would credit the maintainer and miss the contributor entirely.
+          # Commits whose email GitHub cannot map to an account have a null
+          # author and are skipped, as are bots.
+          AUTHORS=$(jq -r '.commits[].author.login // empty' /tmp/compare.json \
+            | grep -viE '\[bot\]$|^copilot$' || true)
+          AUTHORS=$(printf '%s\n' "$AUTHORS" | sed '/^$/d' | sort -u)
+
+          if [ -z "$AUTHORS" ]; then
+            echo "No mappable commit authors in range."
+            exit 0
+          fi
+
+          NEW=""
+          while IFS= read -r login; do
+            # Any commit by this author reachable from the previous tag means
+            # they are not new. per_page=1 keeps it to one cheap call each.
+            # On error we assume "not new" rather than announce a false first.
+            prior=$(gh api "repos/${REPO}/commits?sha=${PREV_TAG}&author=${login}&per_page=1" \
+              --jq 'length' 2>/dev/null || echo "1")
+
+            if [ "$prior" = "0" ]; then
+              sha=$(jq -r --arg l "$login" \
+                '[.commits[] | select(.author.login == $l)][0].sha' /tmp/compare.json)
+              pr=$(gh api "repos/${REPO}/commits/${sha}/pulls" \
+                --jq '.[0].html_url // empty' 2>/dev/null || true)
+
+              if [ -n "$pr" ]; then
+                NEW="${NEW}* @${login} made their first contribution in ${pr}"$'\n'
+              else
+                NEW="${NEW}* @${login} made their first contribution in \`${sha:0:7}\`"$'\n'
+              fi
+            fi
+          done <<< "$AUTHORS"
+
+          if [ -n "$NEW" ]; then
+            {
+              echo "### 🎉 New Contributors"
+              echo ""
+              printf '%s' "$NEW"
+              echo ""
+            } > /tmp/new_contributors.md
+            echo "Found new contributors:"
+            cat /tmp/new_contributors.md
+          else
+            echo "No first-time contributors in this range."
+          fi
+
       # ── Generate release notes from conventional commits ──────────────
       - name: Generate release notes
         id: notes
@@ -72,6 +157,10 @@ jobs:
               echo ""
               echo "</details>"
               echo ""
+            fi
+
+            if [ -s /tmp/new_contributors.md ]; then
+              cat /tmp/new_contributors.md
             fi
 
             if [ -n "$PREV_TAG" ]; then
