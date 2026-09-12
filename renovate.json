@@ -19,7 +19,7 @@
     {
       "description": "Keep the test and lint dependency bumps together in a single PR.",
       "matchManagers": ["pip_requirements"],
-      "groupName": "python test dependencies"
+      "groupName": "python dependencies"
     },
     {
       "description": "Keep the dev container image bumps together in a single PR.",
