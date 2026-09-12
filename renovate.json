@@ -4,7 +4,6 @@
     "config:recommended",
     "helpers:pinGitHubActionDigests"
   ],
-  "dependencyDashboard": true,
   "packageRules": [
     {
       "description": "Keep workflow action bumps together in a single PR.",
@@ -26,15 +25,12 @@
       "description": "Keep the dev container image bumps together in a single PR.",
       "matchManagers": ["docker-compose"],
       "groupName": "dev container images"
-    }
-  ],
-  "customManagers": [
+    },
     {
-      "customType": "regex",
-      "description": "Keep the requirements pinned in the Home Assistant integration manifest up to date.",
-      "managerFilePatterns": ["/^custom_components/[^/]+/manifest\\.json$/"],
-      "matchStrings": ["\"(?<depName>[A-Za-z0-9._-]+)==(?<currentValue>[^\"]+)\""],
-      "datasourceTemplate": "pypi"
+      "description": "webauthn 3.x needs pyOpenSSL>=26.3.0, which Home Assistant does not ship yet. Revisit when the HA constraint moves.",
+      "matchManagers": ["homeassistant-manifest", "pip_requirements"],
+      "matchPackageNames": ["webauthn"],
+      "allowedVersions": "<3.0.0"
     }
   ]
 }
