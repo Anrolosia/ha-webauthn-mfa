@@ -264,6 +264,8 @@
       return origFetch.apply(this, args);
     };
 
+    // Tracks which wait timed out, so a "Login replay failed" report says where.
+    let step = "provider picker";
     try {
       // 1. Select the "Passkey / Security Key" provider. When WebAuthn is the
       //    only auth provider configured, HA skips the picker entirely and
@@ -279,6 +281,7 @@
 
       // 2. Wait for the token input + submit button to render. Both can sit
       //    inside nested shadow DOM, so use a deep search (see _deepFind).
+      step = "token form";
       const submitBtn = await _waitFor(() => {
         const input = _findTokenInput();
         const btn = _deepFind(
@@ -304,7 +307,15 @@
       await _delay(200);
       submitBtn.click();
     } catch (e) {
-      console.error("[WebAuthn MFA] Login replay failed:", e);
+      console.error(
+        `[WebAuthn MFA] Login replay failed at step "${step}":`,
+        {
+          passkeyButton: !!_findPasskeyButton(),
+          tokenInput: !!_findTokenInput(),
+          flowCaptured: !!flowId,
+        },
+        e
+      );
       window.fetch = origFetch; // Restore fetch on failure.
       _overlayError(_t("timeout"));
     }
