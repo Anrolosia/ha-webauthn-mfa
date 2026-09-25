@@ -1,2 +1,2 @@
-ruff==0.16.8
+ruff==0.16.9
 check-jsonschema==0.38.2
