@@ -24,6 +24,7 @@ from http import HTTPStatus
 from ipaddress import ip_address as _parse_ip
 import logging
 import os
+import re
 from typing import Any
 
 from aiohttp.web import Response as AiohttpResponse
@@ -69,6 +70,9 @@ from .store import WebAuthnStore
 
 _LOGGER = logging.getLogger(__name__)
 
+# S256 challenges are always 43 unpadded base64url characters.
+_PKCE_CHALLENGE_RE = re.compile(r"^[A-Za-z0-9_-]{43}\Z")
+
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
@@ -102,7 +106,10 @@ class WebAuthnLoginFlowIndexView(LoginFlowIndexView):
                 vol.Required("handler"): vol.Any(str, list),
                 vol.Required("redirect_uri"): str,
                 vol.Optional("type", default="authorize"): str,
-            }
+            },
+            # Newer cores accept more fields (PKCE). Delegated requests are
+            # re-validated by core's own schema, so let them through here.
+            extra=vol.ALLOW_EXTRA,
         )
     )
     async def post(self, request: Any, data: dict[str, Any]) -> Any:
@@ -120,20 +127,39 @@ class WebAuthnLoginFlowIndexView(LoginFlowIndexView):
         if not indieauth.verify_client_id(client_id):
             return self.json_message("Invalid client id", HTTPStatus.BAD_REQUEST)
 
+        context: dict[str, Any] = {
+            "request": request,
+            "credential_only": data.get("type") == "link_user",
+            "redirect_uri": redirect_uri,
+        }
+
+        # PKCE (core 2026.10+): mirror core's checks and keep the challenge in
+        # the flow context, core stores it with the auth code and checks the
+        # code_verifier at /auth/token.
+        code_challenge = data.get("code_challenge")
+        code_challenge_method = data.get("code_challenge_method")
+        if code_challenge is not None or code_challenge_method is not None:
+            if not isinstance(code_challenge, str) or not _PKCE_CHALLENGE_RE.match(
+                code_challenge
+            ):
+                return self.json_message(
+                    "Invalid code_challenge", HTTPStatus.BAD_REQUEST
+                )
+            if code_challenge_method != "S256":
+                return self.json_message(
+                    "Transform algorithm not supported", HTTPStatus.BAD_REQUEST
+                )
+            context["code_challenge"] = code_challenge
+            context["code_challenge_method"] = code_challenge_method
+
         try:
-            ip_addr = _parse_ip(request.remote)
+            context["ip_address"] = _parse_ip(request.remote)
         except ValueError:
-            ip_addr = None
+            context["ip_address"] = None
 
         try:
             result = await self._flow_mgr.async_init(
-                ("webauthn", None),
-                context={
-                    "request": request,
-                    "credential_only": data.get("type") == "link_user",
-                    "redirect_uri": redirect_uri,
-                    "ip_address": ip_addr,
-                },
+                ("webauthn", None), context=context
             )
         except data_entry_flow.UnknownHandler:
             return self.json_message("Invalid handler", HTTPStatus.NOT_FOUND)
