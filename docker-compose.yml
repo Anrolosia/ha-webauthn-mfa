@@ -28,7 +28,7 @@ services:
 
   test:
     container_name: webauthn_mfa_test
-    image: python:3.14-slim
+    image: python:3.15-slim
     working_dir: /app
     volumes:
       - .:/app
