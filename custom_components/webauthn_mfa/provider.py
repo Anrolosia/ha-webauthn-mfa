@@ -30,8 +30,8 @@ class WebAuthnAuthProvider(AuthProvider):
     The login flow is a single ``init`` step:
     1.  HA displays a text field (``webauthn_token``).
     2.  Our JS layer silently fills the field and clicks *Submit*.
-    3.  ``async_step_init`` validates the short-lived token stored on the
-        flow by ``WebAuthnVerifyView`` and completes the flow.
+    3.  ``async_step_init`` redeems the single-use token issued by
+        ``WebAuthnVerifyView`` and completes the flow.
     """
 
     DEFAULT_TITLE = "Passkey / Security Key"
@@ -52,6 +52,13 @@ class WebAuthnAuthProvider(AuthProvider):
         self._login_flows: weakref.WeakValueDictionary[str, WebAuthnLoginFlow] = (
             weakref.WeakValueDictionary()
         )
+        # Verified-login tokens, mapped to the flow holding the result. The
+        # frontend redeems the token from a fresh login flow after redirecting
+        # back to /auth/authorize, so it can't be looked up on the redeeming
+        # flow itself.
+        self._verified_flows: weakref.WeakValueDictionary[str, WebAuthnLoginFlow] = (
+            weakref.WeakValueDictionary()
+        )
 
     @callback
     def async_register_login_flow(self, flow: WebAuthnLoginFlow) -> None:
@@ -62,6 +69,21 @@ class WebAuthnAuthProvider(AuthProvider):
     def async_get_login_flow(self, flow_id: str) -> WebAuthnLoginFlow | None:
         """Return the in-progress WebAuthn login flow for *flow_id*, if any."""
         return self._login_flows.get(flow_id)
+
+    @callback
+    def async_register_verified_token(
+        self, token: str, flow: WebAuthnLoginFlow
+    ) -> None:
+        """Make the verified result on *flow* redeemable with *token*."""
+        self._verified_flows[token] = flow
+
+    @callback
+    def async_redeem_verified_token(self, token: str) -> dict[str, str] | None:
+        """Return and clear the verified user for *token* (single use)."""
+        flow = self._verified_flows.pop(token, None)
+        if flow is None:
+            return None
+        return flow.async_pop_verified_user()
 
     # ── AuthProvider interface ────────────────────────────────────────────────
 
@@ -138,15 +160,21 @@ class WebAuthnLoginFlow(LoginFlow):
         # Set by WebAuthnChallengeView, consumed by WebAuthnVerifyView.
         self.challenge: bytes | None = None
         # Set by WebAuthnVerifyView once the assertion has been verified.
-        self._verified_token: str | None = None
         self._verified_user: dict[str, str] | None = None
 
     @callback
     def async_set_verified(self, user_id: str, username: str) -> str:
-        """Record a verified assertion and return the token that completes the flow."""
-        self._verified_token = secrets.token_urlsafe(16)
+        """Record a verified assertion and return the token that redeems it."""
+        token = secrets.token_urlsafe(16)
         self._verified_user = {"user_id": user_id, "username": username}
-        return self._verified_token
+        self._auth_provider.async_register_verified_token(token, self)
+        return token
+
+    @callback
+    def async_pop_verified_user(self) -> dict[str, str] | None:
+        """Return and clear the verified user recorded on this flow."""
+        user, self._verified_user = self._verified_user, None
+        return user
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -154,9 +182,12 @@ class WebAuthnLoginFlow(LoginFlow):
         """Handle the (only) login step.
 
         The step exposes a ``webauthn_token`` field.  The token is a random
-        string set on this flow by ``WebAuthnVerifyView`` after a successful
-        cryptographic verification.  Our injected JS fills the
-        field automatically so the user never has to type it manually.
+        string issued by ``WebAuthnVerifyView`` after a successful
+        cryptographic verification.  The verified result lives on the flow the
+        passkey was verified in, which may not be this one: the frontend
+        redeems the token from a fresh flow after redirecting back.  Our
+        injected JS fills the field automatically so the user never has to
+        type it manually.
         """
         # flow_id is only assigned once the flow manager has created us, so
         # register here rather than in __init__.
@@ -178,23 +209,14 @@ class WebAuthnLoginFlow(LoginFlow):
                     description_placeholders=placeholders,
                 )
 
-            expected = self._verified_token
-            result = self._verified_user
-            if (
-                expected is None
-                or result is None
-                or not secrets.compare_digest(token.encode(), expected.encode())
-            ):
+            result = self._auth_provider.async_redeem_verified_token(token)
+            if result is None:
                 return self.async_show_form(
                     step_id="init",
                     data_schema=schema,
                     errors={"base": "invalid_auth"},
                     description_placeholders=placeholders,
                 )
-
-            # Single use, like the hass.data entry this replaces.
-            self._verified_token = None
-            self._verified_user = None
 
             user_id: str = result.get("user_id", "")
             username: str = result.get("username", "")
