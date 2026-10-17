@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import logging
+import secrets
 from typing import Any
+import weakref
 
 import voluptuous as vol
 
 from homeassistant.auth.models import Credentials, UserMeta
 from homeassistant.auth.providers import AuthProvider, LoginFlow
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 
 from .const import PROVIDER_TYPE
@@ -28,8 +30,8 @@ class WebAuthnAuthProvider(AuthProvider):
     The login flow is a single ``init`` step:
     1.  HA displays a text field (``webauthn_token``).
     2.  Our JS layer silently fills the field and clicks *Submit*.
-    3.  ``async_step_init`` validates the short-lived token stored in
-        ``hass.data`` by ``WebAuthnVerifyView`` and completes the flow.
+    3.  ``async_step_init`` validates the short-lived token stored on the
+        flow by ``WebAuthnVerifyView`` and completes the flow.
     """
 
     DEFAULT_TITLE = "Passkey / Security Key"
@@ -44,6 +46,22 @@ class WebAuthnAuthProvider(AuthProvider):
         """Initialise the provider."""
         super().__init__(hass, store, config)
         self.webauthn_store = webauthn_store
+        # Login flows in progress, keyed by flow_id. Held weakly so an entry
+        # disappears as soon as Home Assistant drops the flow (finished,
+        # aborted or cleaned up), and this map can never outgrow core's own.
+        self._login_flows: weakref.WeakValueDictionary[str, WebAuthnLoginFlow] = (
+            weakref.WeakValueDictionary()
+        )
+
+    @callback
+    def async_register_login_flow(self, flow: WebAuthnLoginFlow) -> None:
+        """Make *flow* reachable by its flow_id from the HTTP views."""
+        self._login_flows[flow.flow_id] = flow
+
+    @callback
+    def async_get_login_flow(self, flow_id: str) -> WebAuthnLoginFlow | None:
+        """Return the in-progress WebAuthn login flow for *flow_id*, if any."""
+        return self._login_flows.get(flow_id)
 
     # ── AuthProvider interface ────────────────────────────────────────────────
 
@@ -106,12 +124,29 @@ class WebAuthnAuthProvider(AuthProvider):
 
 
 class WebAuthnLoginFlow(LoginFlow):
-    """Single-step login flow for WebAuthn passkey authentication."""
+    """Single-step login flow for WebAuthn passkey authentication.
+
+    The WebAuthn challenge and the verification result live on the flow
+    itself, so they share its lifetime: they cannot outlive the login attempt
+    and there is no separate store to grow or clean up.
+    """
 
     def __init__(self, auth_provider: WebAuthnAuthProvider) -> None:
         """Initialise the flow."""
         super().__init__(auth_provider)
         self._auth_provider = auth_provider
+        # Set by WebAuthnChallengeView, consumed by WebAuthnVerifyView.
+        self.challenge: bytes | None = None
+        # Set by WebAuthnVerifyView once the assertion has been verified.
+        self._verified_token: str | None = None
+        self._verified_user: dict[str, str] | None = None
+
+    @callback
+    def async_set_verified(self, user_id: str, username: str) -> str:
+        """Record a verified assertion and return the token that completes the flow."""
+        self._verified_token = secrets.token_urlsafe(16)
+        self._verified_user = {"user_id": user_id, "username": username}
+        return self._verified_token
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -119,10 +154,14 @@ class WebAuthnLoginFlow(LoginFlow):
         """Handle the (only) login step.
 
         The step exposes a ``webauthn_token`` field.  The token is a random
-        string stored in ``hass.data`` by ``WebAuthnVerifyView`` after a
-        successful cryptographic verification.  Our injected JS fills the
+        string set on this flow by ``WebAuthnVerifyView`` after a successful
+        cryptographic verification.  Our injected JS fills the
         field automatically so the user never has to type it manually.
         """
+        # flow_id is only assigned once the flow manager has created us, so
+        # register here rather than in __init__.
+        self._auth_provider.async_register_login_flow(self)
+
         schema = vol.Schema({vol.Required("webauthn_token"): str})
         placeholders = {
             "auth_url": f"/api/webauthn_mfa/authenticate?flow_id={self.flow_id}"
@@ -139,18 +178,23 @@ class WebAuthnLoginFlow(LoginFlow):
                     description_placeholders=placeholders,
                 )
 
-            result_key = f"webauthn_mfa_result_{token}"
-            result: dict[str, Any] | None = self._auth_provider.hass.data.pop(
-                result_key, None
-            )
-
-            if not result or not result.get("success"):
+            expected = self._verified_token
+            result = self._verified_user
+            if (
+                expected is None
+                or result is None
+                or not secrets.compare_digest(token.encode(), expected.encode())
+            ):
                 return self.async_show_form(
                     step_id="init",
                     data_schema=schema,
                     errors={"base": "invalid_auth"},
                     description_placeholders=placeholders,
                 )
+
+            # Single use, like the hass.data entry this replaces.
+            self._verified_token = None
+            self._verified_user = None
 
             user_id: str = result.get("user_id", "")
             username: str = result.get("username", "")
