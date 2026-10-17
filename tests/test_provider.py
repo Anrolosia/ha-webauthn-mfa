@@ -108,19 +108,38 @@ def test_login_flow_valid_token(fake_hass, provider):
     assert result["errors"] == {"base": "invalid_auth"}
 
 
-def test_login_flow_rejects_token_from_another_flow(fake_hass, provider):
-    """A token is only valid for the flow it was issued to."""
-    flow_a = WebAuthnLoginFlow(provider)
-    flow_a.hass = fake_hass
-    flow_a.flow_id = "flow-a"
-    flow_b = WebAuthnLoginFlow(provider)
-    flow_b.hass = fake_hass
-    flow_b.flow_id = "flow-b"
+def test_login_flow_redeems_token_from_another_flow(fake_hass, provider):
+    """The frontend redeems the token from a fresh flow after redirecting back."""
+    verifying_flow = WebAuthnLoginFlow(provider)
+    verifying_flow.hass = fake_hass
+    verifying_flow.flow_id = "flow-a"
+    replay_flow = WebAuthnLoginFlow(provider)
+    replay_flow.hass = fake_hass
+    replay_flow.flow_id = "flow-b"
 
-    token = flow_a.async_set_verified("abc123", "testuser")
-    result = run(flow_b.async_step_init({"webauthn_token": token}))
+    token = verifying_flow.async_set_verified("abc123", "testuser")
+    with patch.object(
+        replay_flow,
+        "async_finish",
+        new=AsyncMock(return_value={"type": "create_entry"}),
+    ) as mock_finish:
+        run(replay_flow.async_step_init({"webauthn_token": token}))
 
-    assert result["errors"] == {"base": "invalid_auth"}
+    mock_finish.assert_called_once_with({"username": "testuser", "user_id": "abc123"})
+    assert verifying_flow.async_pop_verified_user() is None
+
+
+def test_verified_token_dropped_with_its_flow(fake_hass, provider):
+    """A token can't outlive the flow holding its verified result."""
+    flow = WebAuthnLoginFlow(provider)
+    flow.hass = fake_hass
+    flow.flow_id = "flow-a"
+    token = flow.async_set_verified("abc123", "testuser")
+
+    del flow
+    gc.collect()
+
+    assert provider.async_redeem_verified_token(token) is None
 
 
 def test_login_flow_registered_with_provider(fake_hass, provider):
