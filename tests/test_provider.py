@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import gc
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -87,17 +88,11 @@ def test_login_flow_invalid_token(fake_hass, provider):
 
 
 def test_login_flow_valid_token(fake_hass, provider):
-    """Submitting a valid token completes the flow."""
-    token = "valid_token_123"
-    fake_hass.data[f"webauthn_mfa_result_{token}"] = {
-        "success": True,
-        "username": "testuser",
-        "user_id": "abc123",
-    }
-
+    """Submitting the token issued by a verified assertion completes the flow."""
     flow = WebAuthnLoginFlow(provider)
     flow.hass = fake_hass
     flow.flow_id = "test-flow-id"
+    token = flow.async_set_verified("abc123", "testuser")
 
     with patch.object(
         flow,
@@ -107,7 +102,59 @@ def test_login_flow_valid_token(fake_hass, provider):
         run(flow.async_step_init({"webauthn_token": token}))
 
     mock_finish.assert_called_once_with({"username": "testuser", "user_id": "abc123"})
-    assert f"webauthn_mfa_result_{token}" not in fake_hass.data
+
+    # The token is single use.
+    result = run(flow.async_step_init({"webauthn_token": token}))
+    assert result["errors"] == {"base": "invalid_auth"}
+
+
+def test_login_flow_redeems_token_from_another_flow(fake_hass, provider):
+    """The frontend redeems the token from a fresh flow after redirecting back."""
+    verifying_flow = WebAuthnLoginFlow(provider)
+    verifying_flow.hass = fake_hass
+    verifying_flow.flow_id = "flow-a"
+    replay_flow = WebAuthnLoginFlow(provider)
+    replay_flow.hass = fake_hass
+    replay_flow.flow_id = "flow-b"
+
+    token = verifying_flow.async_set_verified("abc123", "testuser")
+    with patch.object(
+        replay_flow,
+        "async_finish",
+        new=AsyncMock(return_value={"type": "create_entry"}),
+    ) as mock_finish:
+        run(replay_flow.async_step_init({"webauthn_token": token}))
+
+    mock_finish.assert_called_once_with({"username": "testuser", "user_id": "abc123"})
+    assert verifying_flow.async_pop_verified_user() is None
+
+
+def test_verified_token_dropped_with_its_flow(fake_hass, provider):
+    """A token can't outlive the flow holding its verified result."""
+    flow = WebAuthnLoginFlow(provider)
+    flow.hass = fake_hass
+    flow.flow_id = "flow-a"
+    token = flow.async_set_verified("abc123", "testuser")
+
+    del flow
+    gc.collect()
+
+    assert provider.async_redeem_verified_token(token) is None
+
+
+def test_login_flow_registered_with_provider(fake_hass, provider):
+    """Flows are reachable by flow_id while alive and dropped with the flow."""
+    flow = WebAuthnLoginFlow(provider)
+    flow.hass = fake_hass
+    flow.flow_id = "test-flow-id"
+    run(flow.async_step_init(None))
+
+    assert provider.async_get_login_flow("test-flow-id") is flow
+
+    del flow
+    gc.collect()
+
+    assert provider.async_get_login_flow("test-flow-id") is None
 
 
 def test_login_flow_empty_token(fake_hass, provider):
