@@ -31,6 +31,11 @@
       "matchManagers": ["homeassistant-manifest", "pip_requirements"],
       "matchPackageNames": ["webauthn"],
       "allowedVersions": "<3.0.0"
+    },
+    {
+      "description": "Python follows the version Home Assistant runs on. Revisit when HA moves to 3.15.",
+      "matchPackageNames": ["python"],
+      "allowedVersions": "<3.15"
     }
   ]
 }
