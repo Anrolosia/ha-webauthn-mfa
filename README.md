@@ -60,22 +60,33 @@ The integration is configured from the UI. Go to **Settings** → **Devices & se
 |-------|-------------|
 | `rp_id` | Your HA domain name, without scheme or port. `homeassistant.local` or `ha.example.com` |
 | `rp_name` | Label shown in passkey prompts, such as `Home Assistant` |
-| `expected_origin` | Full URL used to reach HA, including scheme and port if it is not the default |
+| `expected_origin` | Full URL(s) used to reach HA, including scheme. Enter each URL on a new line (in YAML, provide a list/array). |
 
-The host in `expected_origin` must be `rp_id` itself or a subdomain of it. The setup form rejects any other combination, because WebAuthn would otherwise fail silently in the browser.
+Multiple origins are supported via WebAuthn Level 3 Related Origin Requests (ROR), allowing instances accessed through multiple HTTPS addresses (e.g. your external domain, Tailscale, and Nabu Casa) to share the same passkey seamlessly.
+
+Important considerations when configuring multiple origins:
+
+- **RP ID Matching**: When configuring multiple origins, `rp_id` must match the host of one of your configured Home Assistant origins exactly (e.g. `rp_id: ha.example.com` for `https://ha.example.com`), rather than a parent domain like `example.com`. Browsers always fetch the Related Origins manifest from `https://<rp_id>/.well-known/webauthn`, so Home Assistant must be directly reachable at `<rp_id>` to serve it.
+- **HTTPS Required**: All related origins outside `rp_id` must use HTTPS, as mandated by the WebAuthn Level 3 specification. Up to 5 external related origins are supported.
+- **Public Manifest**: When related origins outside `rp_id` are configured, Home Assistant exposes `/.well-known/webauthn` without authentication, which publishes the configured origins list as required by the specification.
+- **Browser Compatibility**: Chromium-based browsers (Chrome, Edge, Brave, Opera) and Safari / WebKit support Related Origin Requests. Firefox does not yet support Related Origin Requests, so passkey logins from secondary related origins will not work in Firefox.
 
 Settings can be changed later from the **Configure** button on the integration card. **A restart is required** for changes to take effect, and changing `rp_id` invalidates every passkey already registered.
 
 <details>
-<summary>Migrating from YAML</summary>
+<summary>Upgrade and Downgrade Notes</summary>
 
-Earlier versions were configured through `configuration.yaml`:
+- **Downgrading:** In multi-origin setups, `expected_origin` is saved in the config entry as a newline-delimited string. If you downgrade to an older release (< v1.6.0) after saving multiple origins, the older integration will fail configuration validation because it expects a single URL. Reconfigure the integration with a single origin before downgrading.
+- **Migrating from YAML:** Earlier versions were configured through `configuration.yaml`:
 
 ```yaml
 webauthn_mfa:
-  rp_id: "homeassistant.local"
+  rp_id: "ha.example.com"
   rp_name: "Home Assistant"
-  expected_origin: "https://homeassistant.local"
+  expected_origin:
+    - "https://ha.example.com"
+    - "https://your-ha.tailnet-xyz.ts.net"
+    - "https://xxxxxx.ui.nabu.casa"
 ```
 
 This block is still read once at startup and imported into a config entry automatically. A deprecation warning is logged, and the block can be removed from `configuration.yaml` afterwards. No passkeys are lost as long as `rp_id` stays the same.

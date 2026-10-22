@@ -13,14 +13,17 @@
         "data_description": {
           "rp_id": "The domain name of your Home Assistant instance, without scheme or port. Use `homeassistant.local` or `ha.example.com`.",
           "rp_name": "A human-readable name shown in passkey prompts, such as `Home Assistant`.",
-          "expected_origin": "The full URL users use to access Home Assistant, including the scheme. The port can be omitted when it is the standard one for that scheme, and both spellings are accepted."
+          "expected_origin": "The full URL(s) users use to access Home Assistant. Enter each URL on a new line, including scheme and non-standard port."
         }
       }
     },
     "error": {
       "invalid_rp_id": "RP ID must be a plain domain name, without scheme or port.",
       "invalid_origin": "Expected origin must start with `https://` or `http://` and contain a host name.",
-      "origin_mismatch": "The host in the expected origin must be the RP ID itself, or a subdomain of it. WebAuthn rejects any other combination."
+      "origin_mismatch": "At least one expected origin must match the RP ID or be a subdomain of it.",
+      "related_origin_rp_mismatch": "When configuring multiple origins, at least one origin host must match the RP ID exactly.",
+      "too_many_origins": "Cannot configure more than 5 related origins outside the RP ID.",
+      "related_origin_must_be_https": "Related origins on distinct domains must use HTTPS."
     },
     "abort": {
       "already_configured": "WebAuthn / Passkey Authentication is already configured.",
@@ -40,14 +43,17 @@
         "data_description": {
           "rp_id": "The domain name of your Home Assistant instance, without scheme or port. Use `homeassistant.local` or `ha.example.com`.",
           "rp_name": "A human-readable name shown in passkey prompts, such as `Home Assistant`.",
-          "expected_origin": "The full URL users use to access Home Assistant, including the scheme. The port can be omitted when it is the standard one for that scheme, and both spellings are accepted."
+          "expected_origin": "The full URL(s) users use to access Home Assistant. Enter each URL on a new line, including scheme and non-standard port."
         }
       }
     },
     "error": {
       "invalid_rp_id": "RP ID must be a plain domain name, without scheme or port.",
       "invalid_origin": "Expected origin must start with `https://` or `http://` and contain a host name.",
-      "origin_mismatch": "The host in the expected origin must be the RP ID itself, or a subdomain of it. WebAuthn rejects any other combination."
+      "origin_mismatch": "At least one expected origin must match the RP ID or be a subdomain of it.",
+      "related_origin_rp_mismatch": "When configuring multiple origins, at least one origin host must match the RP ID exactly.",
+      "too_many_origins": "Cannot configure more than 5 related origins outside the RP ID.",
+      "related_origin_must_be_https": "Related origins on distinct domains must use HTTPS."
     }
   }
 }

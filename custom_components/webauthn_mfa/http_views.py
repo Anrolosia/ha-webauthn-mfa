@@ -8,7 +8,7 @@ import os
 import secrets
 from typing import Any
 
-from aiohttp.web import Request, Response
+from aiohttp.web import Request, Response, json_response
 from aiohttp.web import Response as AiohttpResponse
 import webauthn
 from webauthn.helpers import options_to_json
@@ -535,3 +535,32 @@ class WebAuthnStringsView(HomeAssistantView):
 
         hass: HomeAssistant = request.app["hass"]
         return self.json(await async_get_strings(hass, language, section))
+
+
+class WebAuthnWellKnownView(HomeAssistantView):
+    """Serve the WebAuthn Related Origins manifest.
+
+    ``GET /.well-known/webauthn``
+
+    Provides the W3C WebAuthn Level 3 Related Origin Requests (ROR) manifest
+    allowing authorized related origins (e.g. Tailscale, Nabu Casa, external domain)
+    to share passkeys registered for the primary Relying Party.
+    """
+
+    url = "/.well-known/webauthn"
+    name = "api:webauthn_mfa:well_known"
+    requires_auth = False
+
+    def __init__(self, origins: list[str]) -> None:
+        """Initialise view."""
+        self._origins = origins
+
+    async def get(self, request: Request) -> Response:
+        """Return JSON array of authorized related origins."""
+        return json_response(
+            {"origins": self._origins},
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "max-age=3600",
+            },
+        )
