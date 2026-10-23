@@ -34,7 +34,7 @@
     },
     {
       "description": "Python follows the version Home Assistant runs on. Revisit when HA moves to 3.15.",
-      "matchPackageNames": ["python"],
+      "matchDepNames": ["python"],
       "allowedVersions": "<3.15"
     }
   ]
