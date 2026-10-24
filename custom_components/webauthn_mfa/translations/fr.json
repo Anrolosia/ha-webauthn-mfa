@@ -22,7 +22,7 @@
       "invalid_origin": "L'origine attendue doit commencer par `https://` ou `http://` et contenir un nom d'hôte.",
       "origin_mismatch": "Au moins une origine attendue doit correspondre à l'ID du domaine ou en être un sous-domaine.",
       "related_origin_rp_mismatch": "Lors de la configuration de plusieurs origines, au moins une origine doit correspondre exactement à l'ID du domaine.",
-      "too_many_origins": "Impossible de configurer plus de 5 origines associées en dehors de l'ID du domaine.",
+      "too_many_origins": "Impossible de configurer plus de 5 origines externes en dehors de l'ID du domaine.",
       "related_origin_must_be_https": "Les origines associées sur des domaines distincts doivent utiliser HTTPS."
     },
     "abort": {
@@ -52,7 +52,7 @@
       "invalid_origin": "L'origine attendue doit commencer par `https://` ou `http://` et contenir un nom d'hôte.",
       "origin_mismatch": "Au moins une origine attendue doit correspondre à l'ID du domaine ou en être un sous-domaine.",
       "related_origin_rp_mismatch": "Lors de la configuration de plusieurs origines, au moins une origine doit correspondre exactement à l'ID du domaine.",
-      "too_many_origins": "Impossible de configurer plus de 5 origines associées en dehors de l'ID du domaine.",
+      "too_many_origins": "Impossible de configurer plus de 5 origines externes en dehors de l'ID du domaine.",
       "related_origin_must_be_https": "Les origines associées sur des domaines distincts doivent utiliser HTTPS."
     }
   }

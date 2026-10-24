@@ -104,12 +104,13 @@ def _validate(user_input: dict[str, Any]) -> dict[str, str]:
 
     if CONF_RP_ID not in errors and not has_matching_rp_origin:
         errors[CONF_EXPECTED_ORIGIN] = "origin_mismatch"
-    elif len(parsed_origins) > 1 and not has_exact_rp_match:
+    elif related_origins(parsed_origins, rp_id) and not has_exact_rp_match:
         # Browsers fetch the Related Origins manifest from https://<rp_id>/.well-known/webauthn.
-        # Home Assistant must be directly reachable at rp_id (not just a parent domain).
+        # Home Assistant must be directly reachable at rp_id (not just a parent domain)
+        # whenever external related origins are configured.
         errors[CONF_EXPECTED_ORIGIN] = "related_origin_rp_mismatch"
     elif len(related_origins(parsed_origins, rp_id)) > MAX_RELATED_ORIGINS:
-        # The spec limits the Related Origins manifest to 5 unique domain labels.
+        # Allow up to 5 external origins outside rp_id.
         # Same-site origins sharing rp_id do not count against this limit.
         errors[CONF_EXPECTED_ORIGIN] = "too_many_origins"
 

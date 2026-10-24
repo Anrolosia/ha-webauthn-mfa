@@ -22,7 +22,7 @@
       "invalid_origin": "Expected origin must start with `https://` or `http://` and contain a host name.",
       "origin_mismatch": "At least one expected origin must match the RP ID or be a subdomain of it.",
       "related_origin_rp_mismatch": "When configuring multiple origins, at least one origin host must match the RP ID exactly.",
-      "too_many_origins": "Cannot configure more than 5 related origins outside the RP ID.",
+      "too_many_origins": "Cannot configure more than 5 external origins outside the RP ID.",
       "related_origin_must_be_https": "Related origins on distinct domains must use HTTPS."
     },
     "abort": {
@@ -52,7 +52,7 @@
       "invalid_origin": "Expected origin must start with `https://` or `http://` and contain a host name.",
       "origin_mismatch": "At least one expected origin must match the RP ID or be a subdomain of it.",
       "related_origin_rp_mismatch": "When configuring multiple origins, at least one origin host must match the RP ID exactly.",
-      "too_many_origins": "Cannot configure more than 5 related origins outside the RP ID.",
+      "too_many_origins": "Cannot configure more than 5 external origins outside the RP ID.",
       "related_origin_must_be_https": "Related origins on distinct domains must use HTTPS."
     }
   }

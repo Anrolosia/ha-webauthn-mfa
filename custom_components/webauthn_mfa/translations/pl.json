@@ -22,7 +22,7 @@
       "invalid_origin": "Oczekiwane źródło (Origin) musi zaczynać się od `https://` lub `http://` i zawierać nazwę hosta.",
       "origin_mismatch": "Co najmniej jedno oczekiwane źródło (Origin) musi pasować do identyfikatora RP lub być jego subdomeną.",
       "related_origin_rp_mismatch": "W przypadku konfigurowania wielu źródeł, co najmniej jedno źródło musi dokładnie odpowiadać identyfikatorowi RP.",
-      "too_many_origins": "Nie można skonfigurować więcej niż 5 powiązanych źródeł poza identyfikatorem RP.",
+      "too_many_origins": "Nie można skonfigurować więcej niż 5 zewnętrznych źródeł poza identyfikatorem RP.",
       "related_origin_must_be_https": "Powiązane źródła (origins) w innych domenach muszą używać HTTPS."
     },
     "abort": {
@@ -52,7 +52,7 @@
       "invalid_origin": "Oczekiwane źródło (Origin) musi zaczynać się od `https://` lub `http://` i zawierać nazwę hosta.",
       "origin_mismatch": "Co najmniej jedno oczekiwane źródło (Origin) musi pasować do identyfikatora RP lub być jego subdomeną.",
       "related_origin_rp_mismatch": "W przypadku konfigurowania wielu źródeł, co najmniej jedno źródło musi dokładnie odpowiadać identyfikatorowi RP.",
-      "too_many_origins": "Nie można skonfigurować więcej niż 5 powiązanych źródeł poza identyfikatorem RP.",
+      "too_many_origins": "Nie można skonfigurować więcej niż 5 zewnętrznych źródeł poza identyfikatorem RP.",
       "related_origin_must_be_https": "Powiązane źródła (origins) w innych domenach muszą używać HTTPS."
     }
   }

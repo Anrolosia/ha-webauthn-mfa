@@ -79,4 +79,10 @@ async def test_well_known_view_registered_only_with_related_origins():
         await async_setup_entry(hass, entry_multi)
 
     registered_views = [call.args[0] for call in hass.http.register_view.call_args_list]
-    assert any(isinstance(v, WebAuthnWellKnownView) for v in registered_views)
+    well_known_views = [
+        v for v in registered_views if isinstance(v, WebAuthnWellKnownView)
+    ]
+    assert len(well_known_views) == 1
+    # Manifest must only publish external related origins, omitting same-site origins
+    response = await well_known_views[0].get(MagicMock())
+    assert json.loads(response.text) == {"origins": ["https://tailscale.ts.net"]}

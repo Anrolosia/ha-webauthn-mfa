@@ -62,13 +62,15 @@ The integration is configured from the UI. Go to **Settings** → **Devices & se
 | `rp_name` | Label shown in passkey prompts, such as `Home Assistant` |
 | `expected_origin` | Full URL(s) used to reach HA, including scheme. Enter each URL on a new line (in YAML, provide a list/array). |
 
+For single-origin setups, the host in `expected_origin` must be `rp_id` itself or a subdomain of it (for example, `rp_id: example.com` with `expected_origin: https://ha.example.com`).
+
 Multiple origins are supported via WebAuthn Level 3 Related Origin Requests (ROR), allowing instances accessed through multiple HTTPS addresses (e.g. your external domain, Tailscale, and Nabu Casa) to share the same passkey seamlessly.
 
 Important considerations when configuring multiple origins:
 
-- **RP ID Matching**: When configuring multiple origins, `rp_id` must match the host of one of your configured Home Assistant origins exactly (e.g. `rp_id: ha.example.com` for `https://ha.example.com`), rather than a parent domain like `example.com`. Browsers always fetch the Related Origins manifest from `https://<rp_id>/.well-known/webauthn`, so Home Assistant must be directly reachable at `<rp_id>` to serve it.
+- **RP ID Matching**: When configuring external related origins, `rp_id` must match the host of one of your configured Home Assistant origins exactly (e.g. `rp_id: ha.example.com` for `https://ha.example.com`), rather than a parent domain like `example.com`. Browsers always fetch the Related Origins manifest from `https://<rp_id>/.well-known/webauthn`, so Home Assistant must be directly reachable at `<rp_id>` to serve it. Same-site origins sharing `rp_id` (e.g. different ports or subdomains) do not require an exact match and can continue using a parent domain.
 - **HTTPS Required**: All related origins outside `rp_id` must use HTTPS, as mandated by the WebAuthn Level 3 specification. Up to 5 external related origins are supported.
-- **Public Manifest**: When related origins outside `rp_id` are configured, Home Assistant exposes `/.well-known/webauthn` without authentication, which publishes the configured origins list as required by the specification.
+- **Public Manifest**: When related origins outside `rp_id` are configured, Home Assistant exposes `/.well-known/webauthn` without authentication, which publishes the list of external related origins as required by the specification.
 - **Browser Compatibility**: Chromium-based browsers (Chrome, Edge, Brave, Opera) and Safari / WebKit support Related Origin Requests. Firefox does not yet support Related Origin Requests, so passkey logins from secondary related origins will not work in Firefox.
 
 Settings can be changed later from the **Configure** button on the integration card. **A restart is required** for changes to take effect, and changing `rp_id` invalidates every passkey already registered.
@@ -76,7 +78,7 @@ Settings can be changed later from the **Configure** button on the integration c
 <details>
 <summary>Upgrade and Downgrade Notes</summary>
 
-- **Downgrading:** In multi-origin setups, `expected_origin` is saved in the config entry as a newline-delimited string. If you downgrade to an older release (< v1.6.0) after saving multiple origins, the older integration will fail configuration validation because it expects a single URL. Reconfigure the integration with a single origin before downgrading.
+- **Downgrading:** In multi-origin setups, `expected_origin` is saved in the config entry as a newline-delimited string. If you downgrade to an older release (< v1.6.0) after saving multiple origins, the older integration passes the entire newline-joined string to `normalize_origin`, producing an invalid origin URL (`https://ha.example.com\nhttps://...`), and passkey logins then fail without a clear error. Reconfigure the integration with a single origin before downgrading.
 - **Migrating from YAML:** Earlier versions were configured through `configuration.yaml`:
 
 ```yaml

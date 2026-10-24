@@ -66,6 +66,17 @@ def test_validate_multi_origin_limit_five_external_origins():
     assert _validate(data) == {CONF_EXPECTED_ORIGIN: "too_many_origins"}
 
 
+def test_validate_multi_origin_exactly_five_external_origins_accepted():
+    """Up to 5 external origins outside the RP ID are accepted."""
+    external = ", ".join(f"https://ext{i}.other.com" for i in range(5))
+    data = {
+        CONF_RP_ID: "ha.example.com",
+        CONF_RP_NAME: "Home Assistant",
+        CONF_EXPECTED_ORIGIN: f"https://ha.example.com, {external}",
+    }
+    assert _validate(data) == {}
+
+
 def test_validate_same_site_origins_do_not_count_towards_limit():
     """Same-site origins sharing the RP ID do not count against the 5 limit."""
     subdomains = ", ".join(f"https://sub{i}.ha.example.com" for i in range(8))
@@ -95,6 +106,16 @@ def test_validate_single_origin_allows_parent_domain():
         CONF_RP_ID: "example.com",  # parent domain
         CONF_RP_NAME: "Home Assistant",
         CONF_EXPECTED_ORIGIN: "https://ha.example.com",
+    }
+    assert _validate(data) == {}
+
+
+def test_validate_same_site_multi_origin_allows_parent_domain():
+    """Multiple same-site origins allow rp_id to be a parent domain."""
+    data = {
+        CONF_RP_ID: "example.com",  # parent domain
+        CONF_RP_NAME: "Home Assistant",
+        CONF_EXPECTED_ORIGIN: "https://ha.example.com\nhttps://ha.example.com:8123",
     }
     assert _validate(data) == {}
 
