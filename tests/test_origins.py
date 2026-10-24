@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from custom_components.webauthn_mfa.origins import expected_origins, normalize_origin
+from custom_components.webauthn_mfa.origins import (
+    canonical_origins,
+    expected_origins,
+    normalize_origin,
+    parse_origins,
+    related_origins,
+)
 
 
 @pytest.mark.parametrize(
@@ -83,3 +89,53 @@ def test_expected_origins_never_returns_duplicates() -> None:
     for raw in ("https://ha.test", "https://ha.test:443", "https://ha.test:8123"):
         origins = expected_origins(raw)
         assert len(origins) == len(set(origins))
+
+
+def test_parse_origins_splits_comma_and_newlines() -> None:
+    """Origins can be entered separated by commas, newlines, or whitespace."""
+    raw = "https://ha.test, https://tailscale.ts.net\nhttps://nabu.ui.nabu.casa"
+    assert parse_origins(raw) == [
+        "https://ha.test",
+        "https://tailscale.ts.net",
+        "https://nabu.ui.nabu.casa",
+    ]
+
+
+def test_canonical_origins_normalizes_and_deduplicates() -> None:
+    """Default ports and trailing slashes are canonicalized and deduped."""
+    raw = "https://ha.test:443/, https://ha.test, https://tailscale.ts.net:8443/"
+    assert canonical_origins(raw) == [
+        "https://ha.test",
+        "https://tailscale.ts.net:8443",
+    ]
+
+
+def test_expected_origins_multi_origin() -> None:
+    """Multiple origins expand each entry while deduplicating."""
+    raw = "https://ha.test, https://tailscale.ts.net:8443"
+    assert expected_origins(raw) == [
+        "https://ha.test",
+        "https://ha.test:443",
+        "https://tailscale.ts.net:8443",
+    ]
+
+
+def test_related_origins_excludes_same_site() -> None:
+    """Origins on rp_id or subdomains of rp_id are excluded from related_origins."""
+    raw = [
+        "https://ha.example.com",
+        "https://ha.example.com:8123",
+        "https://sub.ha.example.com",
+        "https://my-ha.tailscale.ts.net",
+        "https://abc.ui.nabu.casa",
+    ]
+    assert related_origins(raw, "ha.example.com") == [
+        "https://my-ha.tailscale.ts.net",
+        "https://abc.ui.nabu.casa",
+    ]
+
+
+def test_related_origins_empty_when_all_same_site() -> None:
+    """When all origins belong to rp_id, related_origins is empty."""
+    raw = "https://ha.example.com\nhttps://ha.example.com:8123"
+    assert related_origins(raw, "ha.example.com") == []

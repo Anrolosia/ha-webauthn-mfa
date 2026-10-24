@@ -13,14 +13,17 @@
         "data_description": {
           "rp_id": "Nazwa domeny Twojej instancji Home Assistanta, bez protokołu ani numeru portu. Użyj `homeassistant.local` lub `ha.example.com`.",
           "rp_name": "Czytelna dla użytkownika nazwa wyświetlana w oknach dialogowych klucza dostępu, np. `Home Assistant`.",
-          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta, zawierający protokół. Numer portu można pominąć, jeśli jest domyślny dla danego protokołu, obie formy są akceptowane."
+          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta. Wpisz każdy adres URL w nowej linii, wraz ze schematem i niestandardowym portem."
         }
       }
     },
     "error": {
       "invalid_rp_id": "Identyfikator RP musi być nazwą domeny, bez protokołu ani numeru portu.",
       "invalid_origin": "Oczekiwane źródło (Origin) musi zaczynać się od `https://` lub `http://` i zawierać nazwę hosta.",
-      "origin_mismatch": "Host w oczekiwanym źródle (Origin) musi być identyfikatorem RP lub jego subdomeną. WebAuthn odrzuci każdą inną kombinację."
+      "origin_mismatch": "Co najmniej jedno oczekiwane źródło (Origin) musi pasować do identyfikatora RP lub być jego subdomeną.",
+      "related_origin_rp_mismatch": "W przypadku konfigurowania wielu źródeł, co najmniej jedno źródło musi dokładnie odpowiadać identyfikatorowi RP.",
+      "too_many_origins": "Nie można skonfigurować więcej niż 5 zewnętrznych źródeł poza identyfikatorem RP.",
+      "related_origin_must_be_https": "Powiązane źródła (origins) w innych domenach muszą używać HTTPS."
     },
     "abort": {
       "already_configured": "Uwierzytelnianie WebAuthn / kluczem dostępu jest już skonfigurowane.",
@@ -40,14 +43,17 @@
         "data_description": {
           "rp_id": "Nazwa domeny Twojej instancji Home Assistanta, bez protokołu ani numeru portu. Użyj `homeassistant.local` lub `ha.example.com`.",
           "rp_name": "Czytelna dla użytkownika nazwa wyświetlana w oknach dialogowych klucza dostępu, np. `Home Assistant`.",
-          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta, zawierający protokół. Numer portu można pominąć, jeśli jest domyślny dla danego protokołu, obie formy są akceptowane."
+          "expected_origin": "Pełny adres URL używany do uzyskiwania dostępu do Home Assistanta. Wpisz każdy adres URL w nowej linii, wraz ze schematem i niestandardowym portem."
         }
       }
     },
     "error": {
       "invalid_rp_id": "Identyfikator RP musi być zwykłą nazwą domeny bez protokołu ani numeru portu.",
       "invalid_origin": "Oczekiwane źródło (Origin) musi zaczynać się od `https://` lub `http://` i zawierać nazwę hosta.",
-      "origin_mismatch": "Host w oczekiwanym źródle (Origin) musi być identyfikatorem RP lub jego subdomeną. WebAuthn odrzuca każdą inną kombinację."
+      "origin_mismatch": "Co najmniej jedno oczekiwane źródło (Origin) musi pasować do identyfikatora RP lub być jego subdomeną.",
+      "related_origin_rp_mismatch": "W przypadku konfigurowania wielu źródeł, co najmniej jedno źródło musi dokładnie odpowiadać identyfikatorowi RP.",
+      "too_many_origins": "Nie można skonfigurować więcej niż 5 zewnętrznych źródeł poza identyfikatorem RP.",
+      "related_origin_must_be_https": "Powiązane źródła (origins) w innych domenach muszą używać HTTPS."
     }
   }
 }

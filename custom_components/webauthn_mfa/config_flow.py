@@ -15,6 +15,7 @@ from homeassistant.config_entries import (
     OptionsFlow,
 )
 from homeassistant.core import callback
+from homeassistant.helpers import selector
 
 from .const import (
     CONF_EXPECTED_ORIGIN,
@@ -22,8 +23,14 @@ from .const import (
     CONF_RP_NAME,
     DEFAULT_RP_NAME,
     DOMAIN,
+    MAX_RELATED_ORIGINS,
 )
-from .origins import normalize_origin
+from .origins import (
+    canonical_origins,
+    normalize_origin,
+    parse_origins,
+    related_origins,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,6 +38,8 @@ _LOGGER = logging.getLogger(__name__)
 def _schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
     """Return the setup schema, pre-filled with *defaults* when reconfiguring."""
     defaults = defaults or {}
+    raw_origin = defaults.get(CONF_EXPECTED_ORIGIN, "")
+    origin_default = "\n".join(canonical_origins(raw_origin)) if raw_origin else ""
     return vol.Schema(
         {
             vol.Required(CONF_RP_ID, default=defaults.get(CONF_RP_ID, "")): str,
@@ -38,18 +47,19 @@ def _schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
                 CONF_RP_NAME, default=defaults.get(CONF_RP_NAME, DEFAULT_RP_NAME)
             ): str,
             vol.Required(
-                CONF_EXPECTED_ORIGIN, default=defaults.get(CONF_EXPECTED_ORIGIN, "")
-            ): str,
+                CONF_EXPECTED_ORIGIN, default=origin_default
+            ): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
         }
     )
 
 
 def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     """Return the normalised settings ready to be stored."""
+    origins = canonical_origins(user_input[CONF_EXPECTED_ORIGIN])
     return {
         CONF_RP_ID: user_input[CONF_RP_ID].strip().lower(),
         CONF_RP_NAME: user_input[CONF_RP_NAME].strip(),
-        CONF_EXPECTED_ORIGIN: normalize_origin(user_input[CONF_EXPECTED_ORIGIN]),
+        CONF_EXPECTED_ORIGIN: "\n".join(origins),
     }
 
 
@@ -58,21 +68,51 @@ def _validate(user_input: dict[str, Any]) -> dict[str, str]:
     errors: dict[str, str] = {}
 
     rp_id = user_input[CONF_RP_ID].strip().lower()
-    origin = normalize_origin(user_input[CONF_EXPECTED_ORIGIN])
+    raw_origins = user_input.get(CONF_EXPECTED_ORIGIN, "")
+    parsed_origins = parse_origins(raw_origins)
 
     if not rp_id or "://" in rp_id or "/" in rp_id or ":" in rp_id:
         errors[CONF_RP_ID] = "invalid_rp_id"
 
-    parsed = urlparse(origin)
-    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+    if not parsed_origins:
         errors[CONF_EXPECTED_ORIGIN] = "invalid_origin"
         return errors
 
-    # WebAuthn requires rp_id to be the origin host itself, or one of its
-    # registrable parent domains. Anything else fails the ceremony silently.
-    host = parsed.hostname.lower()
-    if CONF_RP_ID not in errors and host != rp_id and not host.endswith(f".{rp_id}"):
+    has_exact_rp_match = False
+    has_matching_rp_origin = False
+
+    for raw in parsed_origins:
+        norm = normalize_origin(raw)
+        parsed = urlparse(norm)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname:
+            errors[CONF_EXPECTED_ORIGIN] = "invalid_origin"
+            break
+
+        host = parsed.hostname.lower()
+        if host == rp_id:
+            has_exact_rp_match = True
+            has_matching_rp_origin = True
+        elif host.endswith(f".{rp_id}"):
+            has_matching_rp_origin = True
+        elif parsed.scheme != "https":
+            # Related origins on other domains must use HTTPS per ROR spec.
+            errors[CONF_EXPECTED_ORIGIN] = "related_origin_must_be_https"
+            break
+
+    if CONF_EXPECTED_ORIGIN in errors:
+        return errors
+
+    if CONF_RP_ID not in errors and not has_matching_rp_origin:
         errors[CONF_EXPECTED_ORIGIN] = "origin_mismatch"
+    elif related_origins(parsed_origins, rp_id) and not has_exact_rp_match:
+        # Browsers fetch the Related Origins manifest from https://<rp_id>/.well-known/webauthn.
+        # Home Assistant must be directly reachable at rp_id (not just a parent domain)
+        # whenever external related origins are configured.
+        errors[CONF_EXPECTED_ORIGIN] = "related_origin_rp_mismatch"
+    elif len(related_origins(parsed_origins, rp_id)) > MAX_RELATED_ORIGINS:
+        # Allow up to 5 external origins outside rp_id.
+        # Same-site origins sharing rp_id do not count against this limit.
+        errors[CONF_EXPECTED_ORIGIN] = "too_many_origins"
 
     return errors
 
