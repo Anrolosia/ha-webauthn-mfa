@@ -30,3 +30,6 @@ WEBAUTHN_TOKEN_EXPIRY = 300
 
 # Pending challenges dict key prefix
 CHALLENGE_KEY_PREFIX = "reg_"
+
+# WebAuthn Level 3 Related Origin Requests (ROR) limit
+MAX_RELATED_ORIGINS = 5

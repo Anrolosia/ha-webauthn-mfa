@@ -63,8 +63,9 @@ from .http_views import (
     WebAuthnRegisterVerifyView,
     WebAuthnStringsView,
     WebAuthnVerifyView,
+    WebAuthnWellKnownView,
 )
-from .origins import expected_origins
+from .origins import expected_origins, related_origins
 from .provider import WebAuthnAuthProvider
 from .store import WebAuthnStore
 
@@ -79,7 +80,9 @@ CONFIG_SCHEMA = vol.Schema(
             {
                 vol.Required(CONF_RP_ID): cv.string,
                 vol.Optional(CONF_RP_NAME, default=DEFAULT_RP_NAME): cv.string,
-                vol.Required(CONF_EXPECTED_ORIGIN): cv.string,
+                vol.Required(CONF_EXPECTED_ORIGIN): vol.All(
+                    cv.ensure_list, [cv.string]
+                ),
             }
         )
     },
@@ -199,6 +202,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # decides which spelling it sends. Entries stored before this change are
     # normalised here, so no migration is needed.
     origins: list[str] = expected_origins(entry.data[CONF_EXPECTED_ORIGIN])
+    external_origins: list[str] = related_origins(
+        entry.data[CONF_EXPECTED_ORIGIN], rp_id
+    )
     _LOGGER.debug("WebAuthn: accepted origins %s", origins)
 
     # 1. Persistent credential store.
@@ -223,6 +229,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _replace_login_flow_view(hass)
 
     # 4. Register HTTP API views.
+    if external_origins:
+        hass.http.register_view(WebAuthnWellKnownView(external_origins))
     hass.http.register_view(WebAuthnAuthenticateView(rp_id))
     hass.http.register_view(WebAuthnChallengeView(store, rp_id))
     hass.http.register_view(WebAuthnVerifyView(hass, store, rp_id, origins))

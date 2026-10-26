@@ -13,14 +13,17 @@
         "data_description": {
           "rp_id": "Le nom de domaine de votre instance Home Assistant, sans le schéma ni le port. Utilisez `homeassistant.local` ou `ha.exemple.com`.",
           "rp_name": "Un nom lisible affiché dans les invites de passkey, comme `Home Assistant`.",
-          "expected_origin": "L'URL complète utilisée pour accéder à Home Assistant, avec le schéma. Le port peut être omis lorsqu'il s'agit du port standard du schéma, les deux écritures sont acceptées."
+          "expected_origin": "L'URL complète utilisée pour accéder à Home Assistant. Entrez chaque URL sur une nouvelle ligne, avec le schéma et le port si non standard."
         }
       }
     },
     "error": {
       "invalid_rp_id": "L'ID du domaine doit être un nom de domaine simple, sans schéma ni port.",
       "invalid_origin": "L'origine attendue doit commencer par `https://` ou `http://` et contenir un nom d'hôte.",
-      "origin_mismatch": "L'hôte de l'origine attendue doit être l'ID du domaine lui-même, ou un de ses sous-domaines. WebAuthn refuse toute autre combinaison."
+      "origin_mismatch": "Au moins une origine attendue doit correspondre à l'ID du domaine ou en être un sous-domaine.",
+      "related_origin_rp_mismatch": "Lors de la configuration de plusieurs origines, au moins une origine doit correspondre exactement à l'ID du domaine.",
+      "too_many_origins": "Impossible de configurer plus de 5 origines externes en dehors de l'ID du domaine.",
+      "related_origin_must_be_https": "Les origines associées sur des domaines distincts doivent utiliser HTTPS."
     },
     "abort": {
       "already_configured": "L'authentification WebAuthn / Passkey est déjà configurée.",
@@ -40,14 +43,17 @@
         "data_description": {
           "rp_id": "Le nom de domaine de votre instance Home Assistant, sans le schéma ni le port. Utilisez `homeassistant.local` ou `ha.exemple.com`.",
           "rp_name": "Un nom lisible affiché dans les invites de passkey, comme `Home Assistant`.",
-          "expected_origin": "L'URL complète utilisée pour accéder à Home Assistant, avec le schéma. Le port peut être omis lorsqu'il s'agit du port standard du schéma, les deux écritures sont acceptées."
+          "expected_origin": "L'URL complète utilisée pour accéder à Home Assistant. Entrez chaque URL sur une nouvelle ligne, avec le schéma et le port si non standard."
         }
       }
     },
     "error": {
       "invalid_rp_id": "L'ID du domaine doit être un nom de domaine simple, sans schéma ni port.",
       "invalid_origin": "L'origine attendue doit commencer par `https://` ou `http://` et contenir un nom d'hôte.",
-      "origin_mismatch": "L'hôte de l'origine attendue doit être l'ID du domaine lui-même, ou un de ses sous-domaines. WebAuthn refuse toute autre combinaison."
+      "origin_mismatch": "Au moins une origine attendue doit correspondre à l'ID du domaine ou en être un sous-domaine.",
+      "related_origin_rp_mismatch": "Lors de la configuration de plusieurs origines, au moins une origine doit correspondre exactement à l'ID du domaine.",
+      "too_many_origins": "Impossible de configurer plus de 5 origines externes en dehors de l'ID du domaine.",
+      "related_origin_must_be_https": "Les origines associées sur des domaines distincts doivent utiliser HTTPS."
     }
   }
 }
