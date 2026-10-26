@@ -232,8 +232,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if external_origins:
         hass.http.register_view(WebAuthnWellKnownView(external_origins))
     hass.http.register_view(WebAuthnAuthenticateView(rp_id))
-    hass.http.register_view(WebAuthnChallengeView(store, rp_id))
-    hass.http.register_view(WebAuthnVerifyView(hass, store, rp_id, origins))
+    hass.http.register_view(WebAuthnChallengeView(provider, store, rp_id))
+    hass.http.register_view(WebAuthnVerifyView(hass, provider, store, rp_id, origins))
     hass.http.register_view(WebAuthnRegisterChallengeView(store, rp_id, rp_name))
     hass.http.register_view(WebAuthnRegisterVerifyView(hass, store, rp_id, origins))
     hass.http.register_view(WebAuthnListView(store))
