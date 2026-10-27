@@ -207,7 +207,7 @@ class WebAuthnPanel extends HTMLElement {
 
           <h2>${T.add}</h2>
           <div class="form-row">
-            <ha-input id="passkey-name" type="text" label="${T.placeholder}"></ha-input>
+            <ha-input id="passkey-name" type="text" value="" label="${T.placeholder}"></ha-input>
             <ha-button id="register-btn" appearance="accent">${T.addBtn}</ha-button>
           </div>
           <ha-alert id="status" alert-type="info" hidden></ha-alert>
