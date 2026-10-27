@@ -139,62 +139,80 @@ class WebAuthnPanel extends HTMLElement {
   _buildHTML(T) {
     return `
       <style>
-        .card {
-          background: var(--card-background-color);
-          border-radius: 12px; padding: 24px; max-width: 600px;
-          margin: 0 auto; box-shadow: var(--ha-card-box-shadow, 0 2px 8px rgba(0,0,0,.1));
+        ha-card { display: block; max-width: 680px; margin: 8px auto 0; overflow: hidden; }
+        .card-content { padding: 24px; }
+        .subtitle {
+          margin: 0 0 24px; color: var(--secondary-text-color);
+          font-size: 14px; line-height: 1.5;
         }
-        .subtitle { color: var(--secondary-text-color); margin: 0 0 20px; font-size: 0.9rem; }
-        h2 { font-size: 1rem; font-weight: 600; margin: 20px 0 8px; color: var(--primary-text-color); }
+        h2 {
+          margin: 0 0 8px; color: var(--primary-text-color);
+          font-size: 16px; font-weight: 500;
+        }
+        .credentials-list { margin: 0 -24px; }
         .credential-row {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 10px 12px; border-radius: 8px; margin-bottom: 6px;
-          background: var(--secondary-background-color);
+          display: flex; align-items: center; min-height: 64px; gap: 12px;
+          padding: 8px 24px; border-top: 1px solid var(--divider-color);
         }
-        .credential-info { display: flex; flex-direction: column; gap: 2px; }
-        .credential-name { font-weight: 500; color: var(--primary-text-color); font-size: 0.9rem; }
-        .credential-id { font-size: 0.75rem; color: var(--secondary-text-color); font-family: monospace; }
-        .empty { color: var(--secondary-text-color); font-size: 0.875rem; margin: 0; }
-        .btn-delete {
-          padding: 6px 12px; border-radius: 6px; border: 1px solid var(--error-color, #ef4444);
-          background: transparent; color: var(--error-color, #ef4444);
-          cursor: pointer; font-size: 0.8rem; white-space: nowrap;
+        .credential-row:first-child { border-top: 0; }
+        .credential-key {
+          flex: 0 0 auto; padding: 9px; border-radius: 50%;
+          background: var(--secondary-background-color); color: var(--primary-color);
+          --mdc-icon-size: 22px;
         }
-        .btn-delete:hover { background: var(--error-color, #ef4444); color: white; }
-        .divider { border: none; border-top: 1px solid var(--divider-color); margin: 20px 0; }
-        .form-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-        input {
-          flex: 1; min-width: 200px; padding: 10px 14px; border-radius: 8px;
-          border: 1px solid var(--divider-color);
-          background: var(--input-fill-color, var(--secondary-background-color));
-          color: var(--primary-text-color); font-size: 0.9rem;
+        .credential-info {
+          display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px;
         }
-        .btn-add {
-          padding: 10px 20px; border-radius: 8px; border: none;
-          background: var(--primary-color); color: white;
-          font-weight: 600; cursor: pointer; font-size: 0.9rem; white-space: nowrap;
+        .credential-name {
+          overflow: hidden; color: var(--primary-text-color); font-size: 14px;
+          font-weight: 500; text-overflow: ellipsis; white-space: nowrap;
         }
-        .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
-        .status { padding: 10px 14px; border-radius: 8px; font-size: 0.875rem; display: none; margin-top: 8px; }
-        .status.info    { display: block; background: #1e3a5f; color: #93c5fd; }
-        .status.success { display: block; background: #052e16; color: #86efac; }
-        .status.error   { display: block; background: #450a0a; color: #fca5a5; }
+        .credential-id {
+          overflow: hidden; color: var(--secondary-text-color);
+          font-family: monospace; font-size: 12px;
+          text-overflow: ellipsis; white-space: nowrap;
+        }
+        .empty, .loading {
+          display: flex; align-items: center; min-height: 64px; gap: 12px;
+          margin: 0; padding: 0 24px; color: var(--secondary-text-color);
+          font-size: 14px;
+        }
+        .loading ha-spinner { width: 28px; height: 28px; }
+        .divider { border: 0; border-top: 1px solid var(--divider-color); margin: 24px 0; }
+        .form-row { display: flex; align-items: flex-start; gap: 12px; }
+        .form-row ha-input { flex: 1; min-width: 0; }
+        .form-row ha-button { flex: 0 0 auto; margin-top: 8px; }
+        #status { display: block; margin-top: 16px; }
+        #status[hidden] { display: none; }
+        @media (max-width: 600px) {
+          ha-card { margin-top: 0; }
+          .card-content { padding: 16px; }
+          .credentials-list { margin: 0 -16px; }
+          .credential-row, .empty, .loading { padding-left: 16px; padding-right: 16px; }
+          .form-row { flex-direction: column; }
+          .form-row ha-input, .form-row ha-button { width: 100%; }
+          .form-row ha-button { margin-top: 0; }
+        }
       </style>
-      <div class="card">
-        <p class="subtitle">${T.subtitle}</p>
+      <ha-card>
+        <div class="card-content">
+          <p class="subtitle">${T.subtitle}</p>
 
-        <h2>${T.registered}</h2>
-        <div id="credentials-list"><p class="empty">${T.loading}</p></div>
+          <h2>${T.registered}</h2>
+          <div id="credentials-list" class="credentials-list" aria-live="polite">
+            <div class="loading"><ha-spinner></ha-spinner><span>${T.loading}</span></div>
+          </div>
 
-        <hr class="divider">
+          <hr class="divider">
 
-        <h2>${T.add}</h2>
-        <div class="form-row">
-          <input id="passkey-name" type="text" placeholder="${T.placeholder}" />
-          <button id="register-btn" class="btn-add">${T.addBtn}</button>
+          <h2>${T.add}</h2>
+          <div class="form-row">
+            <ha-input id="passkey-name" type="text" label="${T.placeholder}"></ha-input>
+            <ha-button id="register-btn" appearance="accent">${T.addBtn}</ha-button>
+          </div>
+          <ha-alert id="status" alert-type="info" hidden></ha-alert>
         </div>
-        <div id="status" class="status"></div>
-      </div>
+      </ha-card>
     `;
   }
 
@@ -260,17 +278,21 @@ class WebAuthnPanel extends HTMLElement {
     if (!container) return;
 
     if (this._credentials.length === 0) {
-      container.innerHTML = `<p class="empty">${T.empty}</p>`;
+      container.innerHTML = `
+        <p class="empty"><ha-icon icon="mdi:key-variant"></ha-icon><span>${T.empty}</span></p>
+      `;
       return;
     }
 
     container.innerHTML = this._credentials.map(c => `
       <div class="credential-row">
+        <ha-icon class="credential-key" icon="mdi:key-variant"></ha-icon>
         <div class="credential-info">
-          <span class="credential-name">🔑 ${c.name}</span>
+          <span class="credential-name">${c.name}</span>
           <span class="credential-id">${c.credential_id}</span>
         </div>
-        <button class="btn-delete" data-id="${c.credential_id}">${T.delete}</button>
+        <ha-button class="btn-delete" appearance="plain" variant="danger"
+          data-id="${c.credential_id}">${T.delete}</ha-button>
       </div>
     `).join("");
 
@@ -365,8 +387,9 @@ class WebAuthnPanel extends HTMLElement {
   _setStatus(root, msg, type) {
     const el = root.querySelector("#status");
     if (!el) return;
-    el.className = `status ${type}`;
+    el.setAttribute("alert-type", type);
     el.textContent = msg;
+    el.hidden = false;
   }
 }
 

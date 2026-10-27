@@ -49,29 +49,32 @@
       inset: "0",
       zIndex: "2147483647",
       display: "flex",
-      flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      gap: "20px",
-      background: "var(--primary-background-color, #111418)",
-      color: "var(--primary-text-color, #e1e1e1)",
-      font: "500 16px/1.4 Roboto, system-ui, sans-serif",
-      textAlign: "center",
-      padding: "24px",
+      boxSizing: "border-box",
+      background: "var(--primary-background-color, #fafafa)",
+      color: "var(--primary-text-color, #212121)",
+      font: "400 14px/1.5 Roboto, system-ui, sans-serif",
+      padding: "16px",
     });
     overlay.innerHTML =
-      '<div class="wa-spinner"></div>' +
-      '<div class="wa-text"></div>' +
+      '<div class="wa-card"><div class="wa-content">' +
+      '<ha-spinner class="wa-spinner"></ha-spinner>' +
+      '<div class="wa-text" role="status" aria-live="polite"></div>' +
+      "</div></div>" +
       "<style>" +
-      "#webauthn-overlay .wa-spinner{width:44px;height:44px;border-radius:50%;" +
-      "border:4px solid var(--divider-color,#3a3f44);" +
-      "border-top-color:var(--primary-color,#03a9f4);" +
-      "animation:wa-spin .8s linear infinite}" +
-      "#webauthn-overlay .wa-text{opacity:.85;max-width:280px}" +
-      "#webauthn-overlay button{padding:8px 18px;cursor:pointer;border-radius:6px;" +
-      "border:1px solid var(--divider-color,#3a3f44);background:transparent;" +
-      "color:inherit;font:inherit}" +
-      "@keyframes wa-spin{to{transform:rotate(360deg)}}" +
+      "#webauthn-overlay .wa-card{box-sizing:border-box;width:100%;max-width:400px;" +
+      "padding:16px;border:1px solid var(--divider-color,#e0e0e0);" +
+      "border-radius:var(--ha-border-radius-lg,12px);" +
+      "background:var(--card-background-color,#fff);" +
+      "box-shadow:var(--ha-card-box-shadow,none)}" +
+      "#webauthn-overlay .wa-content{display:flex;flex-direction:column;" +
+      "align-items:center;gap:16px;width:100%;max-width:336px;margin:0 auto;" +
+      "padding:24px 0;text-align:center}" +
+      "#webauthn-overlay .wa-spinner{width:40px;height:40px}" +
+      "#webauthn-overlay .wa-text{max-width:300px;color:var(--secondary-text-color,#727272)}" +
+      "#webauthn-overlay .wa-error{width:100%;text-align:start}" +
+      "#webauthn-overlay .wa-actions{display:flex;justify-content:center;width:100%}" +
       "</style>";
     overlay.querySelector(".wa-text").textContent = text;
     (document.body || document.documentElement).appendChild(overlay);
@@ -80,13 +83,28 @@
   function _overlayError(text) {
     const overlay = document.getElementById("webauthn-overlay");
     if (!overlay) return;
-    overlay.innerHTML =
-      '<div class="wa-text" style="opacity:.85;max-width:280px">' + text + "</div>" +
-      '<button type="button">' + _t("back") + "</button>";
-    overlay.querySelector("button").addEventListener("click", () => {
+    const content = overlay.querySelector(".wa-content");
+    if (!content) return;
+    content.replaceChildren();
+
+    const alert = document.createElement("ha-alert");
+    alert.className = "wa-error";
+    alert.setAttribute("alert-type", "error");
+    alert.textContent = text;
+
+    const actions = document.createElement("div");
+    actions.className = "wa-actions";
+    const button = document.createElement("ha-button");
+    button.setAttribute("appearance", "filled");
+    button.setAttribute("variant", "neutral");
+    button.textContent = _t("back");
+    button.addEventListener("click", () => {
       sessionStorage.setItem("webauthn_bypass", "1");
       window.location.reload();
     });
+    actions.appendChild(button);
+    content.append(alert, actions);
+    button.focus();
   }
 
   // ── Wait helper: MutationObserver + rAF, pierces shadow DOM ────────────
