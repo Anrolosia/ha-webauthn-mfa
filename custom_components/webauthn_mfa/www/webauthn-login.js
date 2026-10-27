@@ -75,6 +75,12 @@
       "#webauthn-overlay .wa-text{max-width:300px;color:var(--secondary-text-color,#727272)}" +
       "#webauthn-overlay .wa-error{width:100%;text-align:start}" +
       "#webauthn-overlay .wa-actions{display:flex;justify-content:center;width:100%}" +
+      "#webauthn-overlay .wa-native-button{min-height:40px;padding:8px 20px;" +
+      "border:1px solid var(--divider-color,#727272);border-radius:999px;" +
+      "background:var(--card-background-color,#fff);color:var(--primary-text-color,#212121);" +
+      "font:inherit;font-weight:500;cursor:pointer}" +
+      "#webauthn-overlay .wa-native-button:focus-visible{outline:2px solid " +
+      "var(--primary-color,#006787);outline-offset:2px}" +
       "</style>";
     overlay.querySelector(".wa-text").textContent = text;
     (document.body || document.documentElement).appendChild(overlay);
@@ -90,13 +96,20 @@
     const alert = document.createElement("ha-alert");
     alert.className = "wa-error";
     alert.setAttribute("alert-type", "error");
+    alert.setAttribute("role", "alert");
     alert.textContent = text;
 
     const actions = document.createElement("div");
     actions.className = "wa-actions";
-    const button = document.createElement("ha-button");
-    button.setAttribute("appearance", "filled");
-    button.setAttribute("variant", "neutral");
+    const hasHaButton = Boolean(customElements.get("ha-button"));
+    const button = document.createElement(hasHaButton ? "ha-button" : "button");
+    if (hasHaButton) {
+      button.setAttribute("appearance", "filled");
+      button.setAttribute("variant", "neutral");
+    } else {
+      button.className = "wa-native-button";
+      button.type = "button";
+    }
     button.textContent = _t("back");
     button.addEventListener("click", () => {
       sessionStorage.setItem("webauthn_bypass", "1");
