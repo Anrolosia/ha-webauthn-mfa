@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from http import HTTPStatus
+from inspect import signature
 from ipaddress import ip_address as _parse_ip
 import logging
 import os
@@ -73,6 +74,11 @@ _LOGGER = logging.getLogger(__name__)
 
 # S256 challenges are always 43 unpadded base64url characters.
 _PKCE_CHALLENGE_RE = re.compile(r"^[A-Za-z0-9_-]{43}\Z")
+
+# Core 2026.11+ requires the request origin; older supported cores reject it.
+_CLIENT_ID_REQUIRES_REQUEST_ORIGIN = (
+    "request_scheme" in signature(indieauth.verify_client_id).parameters
+)
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -127,7 +133,14 @@ class WebAuthnLoginFlowIndexView(LoginFlowIndexView):
         client_id: str = data.get("client_id", "")
         redirect_uri: str = data.get("redirect_uri", "")
 
-        if not indieauth.verify_client_id(client_id):
+        if _CLIENT_ID_REQUIRES_REQUEST_ORIGIN:
+            valid_client_id = indieauth.verify_client_id(
+                client_id, request_scheme=request.scheme, request_netloc=request.host
+            )
+        else:
+            valid_client_id = indieauth.verify_client_id(client_id)
+
+        if not valid_client_id:
             return self.json_message("Invalid client id", HTTPStatus.BAD_REQUEST)
 
         context: dict[str, Any] = {
