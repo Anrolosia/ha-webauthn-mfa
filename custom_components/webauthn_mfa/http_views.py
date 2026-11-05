@@ -33,12 +33,14 @@ from homeassistant.core import HomeAssistant
 
 from .const import PROVIDER_TYPE
 from .frontend_translations import async_get_strings, async_resolve_language, js_literal
+from .provider import WebAuthnAuthProvider
 from .store import WebAuthnStore
 
 _LOGGER = logging.getLogger(__name__)
 
-# In-memory challenge store: key → {challenge, ...}
-# Keys: ``flow_id`` (authentication) or ``reg_<user_id>`` (registration).
+# Pending registration challenges, keyed by ``reg_<user_id>``. Only reachable
+# by authenticated users, so bounded by the number of users. Authentication
+# challenges are kept on the login flow instead (see WebAuthnLoginFlow).
 _PENDING_CHALLENGES: dict[str, dict[str, Any]] = {}
 
 
@@ -102,8 +104,11 @@ class WebAuthnChallengeView(HomeAssistantView):
     name = "api:webauthn_mfa:challenge"
     requires_auth = False
 
-    def __init__(self, store: WebAuthnStore, rp_id: str) -> None:
+    def __init__(
+        self, provider: WebAuthnAuthProvider, store: WebAuthnStore, rp_id: str
+    ) -> None:
         """Initialise view."""
+        self._provider = provider
         self._store = store
         self._rp_id = rp_id
 
@@ -114,6 +119,10 @@ class WebAuthnChallengeView(HomeAssistantView):
 
         if not flow_id:
             return self.json({"error": "flow_id required"}, status_code=400)
+
+        flow = self._provider.async_get_login_flow(flow_id)
+        if flow is None:
+            return self.json({"error": "unknown_flow"}, status_code=400)
 
         hass: HomeAssistant = request.app["hass"]
 
@@ -137,7 +146,7 @@ class WebAuthnChallengeView(HomeAssistantView):
             )
 
         challenge = secrets.token_bytes(32)
-        _PENDING_CHALLENGES[flow_id] = {"challenge": challenge}
+        flow.challenge = challenge
 
         options = webauthn.generate_authentication_options(
             rp_id=self._rp_id,
@@ -154,7 +163,7 @@ class WebAuthnVerifyView(HomeAssistantView):
     ``POST /api/webauthn_mfa/verify``
     Body: ``{"flow_id": "...", "response": {<WebAuthn assertion>}}``
 
-    On success stores a short-lived token in ``hass.data`` so that
+    On success stores a single-use token on the login flow so that
     ``WebAuthnLoginFlow.async_step_init`` can complete the HA login flow.
     """
 
@@ -165,12 +174,14 @@ class WebAuthnVerifyView(HomeAssistantView):
     def __init__(
         self,
         hass: HomeAssistant,
+        provider: WebAuthnAuthProvider,
         store: WebAuthnStore,
         rp_id: str,
         expected_origin: list[str],
     ) -> None:
         """Initialise view."""
         self._hass = hass
+        self._provider = provider
         self._store = store
         self._rp_id = rp_id
         self._expected_origin = expected_origin
@@ -186,8 +197,13 @@ class WebAuthnVerifyView(HomeAssistantView):
                 {"error": "flow_id and response required"}, status_code=400
             )
 
-        pending = _PENDING_CHALLENGES.pop(flow_id, None)
-        if not pending:
+        flow = self._provider.async_get_login_flow(flow_id)
+        if flow is None:
+            return self.json({"error": "challenge_expired"}, status_code=400)
+
+        # Single use: a failed attempt needs a fresh challenge.
+        challenge, flow.challenge = flow.challenge, None
+        if challenge is None:
             return self.json({"error": "challenge_expired"}, status_code=400)
 
         # Locate the stored credential from its hex ID.
@@ -228,7 +244,7 @@ class WebAuthnVerifyView(HomeAssistantView):
             verification = webauthn.verify_authentication_response(
                 credential=auth_credential,
                 expected_rp_id=self._rp_id,
-                expected_challenge=pending["challenge"],
+                expected_challenge=challenge,
                 expected_origin=self._expected_origin,
                 credential_public_key=bytes.fromhex(stored_credential["public_key"]),
                 credential_current_sign_count=stored_credential.get("sign_count", 0),
@@ -253,13 +269,8 @@ class WebAuthnVerifyView(HomeAssistantView):
         user = await self._hass.auth.async_get_user(user_id)
         username = user.name if user else user_id
 
-        # Issue a short-lived token consumed by WebAuthnLoginFlow.
-        token = secrets.token_urlsafe(16)
-        self._hass.data[f"webauthn_mfa_result_{token}"] = {
-            "success": True,
-            "username": username,
-            "user_id": user_id,
-        }
+        # Issue a single-use token consumed by WebAuthnLoginFlow.
+        token = flow.async_set_verified(user_id, username)
 
         _LOGGER.info(
             "WebAuthn: authentication OK for user_id=%s (%s)", user_id, username
