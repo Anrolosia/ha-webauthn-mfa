@@ -14,6 +14,7 @@
       "noSupport": "Your browser does not support passkeys.",
       "fetchChallenge": "Fetching challenge...",
       "serverError": "Server error",
+      "flowExpired": "This sign-in has expired. Please go back and start the login again.",
       "waiting": "Waiting for your passkey...",
       "verified": "✓ Passkey verified! Redirecting...",
       "failed": "Failed",

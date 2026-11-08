@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from http import HTTPStatus
 import json
 from unittest.mock import AsyncMock, MagicMock
@@ -19,10 +18,7 @@ from custom_components.webauthn_mfa.provider import (
     WebAuthnLoginFlow,
 )
 
-
-def run(coro):
-    """Run a coroutine synchronously."""
-    return asyncio.new_event_loop().run_until_complete(coro)
+from .conftest import run
 
 
 def _request(hass, body):
@@ -99,3 +95,20 @@ def test_verify_consumes_challenge(hass, provider, flow, mock_webauthn_store):
     assert flow.challenge is None
     assert second.status == HTTPStatus.BAD_REQUEST
     assert json.loads(second.text) == {"error": "challenge_expired"}
+
+
+def test_verify_rejects_unknown_flow(hass, provider, mock_webauthn_store):
+    """Verify reports an unknown flow the same way the challenge view does."""
+    view = WebAuthnVerifyView(
+        hass,
+        provider,
+        mock_webauthn_store,
+        "homeassistant.local",
+        ["https://homeassistant.local"],
+    )
+    body = {"flow_id": "made-up", "response": {"id": "AAAA"}}
+
+    response = run(view.post(_request(hass, body)))
+
+    assert response.status == HTTPStatus.BAD_REQUEST
+    assert json.loads(response.text) == {"error": "unknown_flow"}

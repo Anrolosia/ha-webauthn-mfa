@@ -14,6 +14,7 @@
       "noSupport": "Tu navegador no admite passkeys.",
       "fetchChallenge": "Obteniendo desafío...",
       "serverError": "Error del servidor",
+      "flowExpired": "Este inicio de sesión ha caducado. Vuelve atrás e inicia sesión de nuevo.",
       "waiting": "Esperando tu passkey...",
       "verified": "✓ ¡Passkey verificada! Redirigiendo...",
       "failed": "Error",

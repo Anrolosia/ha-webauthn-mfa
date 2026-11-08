@@ -199,7 +199,7 @@ class WebAuthnVerifyView(HomeAssistantView):
 
         flow = self._provider.async_get_login_flow(flow_id)
         if flow is None:
-            return self.json({"error": "challenge_expired"}, status_code=400)
+            return self.json({"error": "unknown_flow"}, status_code=400)
 
         # Single use: a failed attempt needs a fresh challenge.
         challenge, flow.challenge = flow.challenge, None
