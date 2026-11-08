@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import secrets
 from typing import Any
@@ -12,7 +13,7 @@ import voluptuous as vol
 from homeassistant.auth.models import Credentials, UserMeta
 from homeassistant.auth.providers import AuthProvider, LoginFlow
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.data_entry_flow import FlowResult, UnknownFlow
 
 from .const import PROVIDER_TYPE
 from .store import WebAuthnStore
@@ -47,8 +48,9 @@ class WebAuthnAuthProvider(AuthProvider):
         super().__init__(hass, store, config)
         self.webauthn_store = webauthn_store
         # Login flows in progress, keyed by flow_id. Held weakly so an entry
-        # disappears as soon as Home Assistant drops the flow (finished,
-        # aborted or cleaned up), and this map can never outgrow core's own.
+        # goes away once Home Assistant drops the flow (finished, aborted or
+        # cleaned up) and it is garbage collected, so this map can never
+        # outgrow core's own.
         self._login_flows: weakref.WeakValueDictionary[str, WebAuthnLoginFlow] = (
             weakref.WeakValueDictionary()
         )
@@ -56,6 +58,12 @@ class WebAuthnAuthProvider(AuthProvider):
         # frontend redeems the token from a fresh login flow after redirecting
         # back to /auth/authorize, so it can't be looked up on the redeeming
         # flow itself.
+        #
+        # This relies on the verifying flow staying alive until the token is
+        # redeemed. That holds today: neither the frontend nor core removes an
+        # in-progress login flow on its own, and we abort it ourselves once
+        # the token is redeemed. If core ever starts expiring login flows, a
+        # passkey login would fail with invalid_auth after a slow redirect.
         self._verified_flows: weakref.WeakValueDictionary[str, WebAuthnLoginFlow] = (
             weakref.WeakValueDictionary()
         )
@@ -78,12 +86,28 @@ class WebAuthnAuthProvider(AuthProvider):
         self._verified_flows[token] = flow
 
     @callback
-    def async_redeem_verified_token(self, token: str) -> dict[str, str] | None:
-        """Return and clear the verified user for *token* (single use)."""
+    def async_unregister_verified_token(self, token: str) -> None:
+        """Stop *token* from redeeming anything."""
+        self._verified_flows.pop(token, None)
+
+    @callback
+    def async_redeem_verified_token(
+        self, token: str, redeeming_flow: WebAuthnLoginFlow | None = None
+    ) -> dict[str, str] | None:
+        """Return and clear the verified user for *token* (single use).
+
+        The flow the passkey was verified in has served its purpose once its
+        token is redeemed, so it is aborted, unless it is the flow redeeming
+        the token (which finishes on its own).
+        """
         flow = self._verified_flows.pop(token, None)
         if flow is None:
             return None
-        return flow.async_pop_verified_user()
+        user = flow.async_pop_verified_user(token)
+        if user is not None and flow is not redeeming_flow:
+            with contextlib.suppress(UnknownFlow):
+                self.hass.auth.login_flow.async_abort(flow.flow_id)
+        return user
 
     # ── AuthProvider interface ────────────────────────────────────────────────
 
@@ -159,21 +183,36 @@ class WebAuthnLoginFlow(LoginFlow):
         self._auth_provider = auth_provider
         # Set by WebAuthnChallengeView, consumed by WebAuthnVerifyView.
         self.challenge: bytes | None = None
-        # Set by WebAuthnVerifyView once the assertion has been verified.
+        # Set by WebAuthnVerifyView once the assertion has been verified,
+        # together with the only token that can redeem it.
         self._verified_user: dict[str, str] | None = None
+        self._verified_token: str | None = None
 
     @callback
     def async_set_verified(self, user_id: str, username: str) -> str:
-        """Record a verified assertion and return the token that redeems it."""
+        """Record a verified assertion and return the token that redeems it.
+
+        A flow holds at most one verified result. Verifying again replaces it
+        and revokes the previous token, so a token always redeems the user it
+        was issued for.
+        """
+        if self._verified_token is not None:
+            self._auth_provider.async_unregister_verified_token(self._verified_token)
         token = secrets.token_urlsafe(16)
         self._verified_user = {"user_id": user_id, "username": username}
+        self._verified_token = token
         self._auth_provider.async_register_verified_token(token, self)
         return token
 
     @callback
-    def async_pop_verified_user(self) -> dict[str, str] | None:
-        """Return and clear the verified user recorded on this flow."""
+    def async_pop_verified_user(self, token: str) -> dict[str, str] | None:
+        """Return and clear the verified user, if *token* is the one issued."""
+        if self._verified_token is None or not secrets.compare_digest(
+            token, self._verified_token
+        ):
+            return None
         user, self._verified_user = self._verified_user, None
+        self._verified_token = None
         return user
 
     async def async_step_init(
@@ -209,7 +248,7 @@ class WebAuthnLoginFlow(LoginFlow):
                     description_placeholders=placeholders,
                 )
 
-            result = self._auth_provider.async_redeem_verified_token(token)
+            result = self._auth_provider.async_redeem_verified_token(token, self)
             if result is None:
                 return self.async_show_form(
                     step_id="init",
