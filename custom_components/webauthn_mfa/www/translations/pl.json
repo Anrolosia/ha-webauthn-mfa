@@ -14,6 +14,7 @@
       "noSupport": "Twoja przeglądarka nie obsługuje kluczy dostępu.",
       "fetchChallenge": "Pobieranie wyzwania...",
       "serverError": "Błąd serwera",
+      "flowExpired": "Ta próba logowania wygasła. Wróć i rozpocznij logowanie ponownie.",
       "waiting": "Oczekiwanie na klucz dostępu...",
       "verified": "✓ Klucz dostępu zweryfikowany! Przekierowywanie...",
       "failed": "Niepowodzenie",

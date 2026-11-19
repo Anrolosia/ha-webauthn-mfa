@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from custom_components.webauthn_mfa.store import WebAuthnStore
 
-
-def run(coro):
-    """Run a coroutine synchronously, bypassing pytest-asyncio entirely."""
-    return asyncio.new_event_loop().run_until_complete(coro)
+from .conftest import run
 
 
 class _FakeHass:

@@ -14,6 +14,7 @@
       "noSupport": "Ihr Browser unterstützt keine Passkeys.",
       "fetchChallenge": "Challenge wird abgerufen...",
       "serverError": "Serverfehler",
+      "flowExpired": "Diese Anmeldung ist abgelaufen. Bitte gehen Sie zurück und starten Sie die Anmeldung erneut.",
       "waiting": "Warten auf Ihren Passkey...",
       "verified": "✓ Passkey bestätigt! Weiterleitung...",
       "failed": "Fehlgeschlagen",

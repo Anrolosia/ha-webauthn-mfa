@@ -2,11 +2,26 @@
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Coroutine
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from custom_components.webauthn_mfa.store import WebAuthnStore
+
+
+def run[T](coro: Coroutine[Any, Any, T]) -> T:
+    """Run a coroutine synchronously on a fresh event loop, then close it.
+
+    Lets the tests stay plain functions, bypassing pytest-asyncio entirely.
+    """
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
 
 
 @pytest.fixture
